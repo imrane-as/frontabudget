@@ -11,6 +11,7 @@ export default function OnboardingPage() {
   const [workCountry, setWorkCountry] = useState("Luxembourg");
   const [weatherCity, setWeatherCity] = useState("Metz");
   const [salary, setSalary] = useState("3250");
+  const [savingsTarget, setSavingsTarget] = useState("300");
   const [goal, setGoal] = useState("Comprendre mes dépenses");
   const [loading, setLoading] = useState(false);
 
@@ -31,6 +32,7 @@ export default function OnboardingPage() {
         residence_country: residence,
         work_country: workCountry,
         weather_city: weatherCity.trim() || "Metz",
+        monthly_savings_target: Number(savingsTarget) || 0,
         primary_goal: goal,
         onboarding_completed: true
       })
@@ -96,6 +98,17 @@ export default function OnboardingPage() {
               step="0.01"
               value={salary}
               onChange={(e) => setSalary(e.target.value)}
+            />
+          </label>
+
+          <label>
+            Épargne à protéger chaque mois (€)
+            <input
+              type="number"
+              min="0"
+              step="10"
+              value={savingsTarget}
+              onChange={(e) => setSavingsTarget(e.target.value)}
             />
           </label>
 

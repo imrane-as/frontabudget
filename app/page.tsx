@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BellRing, BrainCircuit, CloudSun, MessageCircleMore } from "lucide-react";
+import { BellRing, BrainCircuit, Calculator, CloudSun } from "lucide-react";
 
 export default function HomePage() {
   return (
@@ -9,8 +9,8 @@ export default function HomePage() {
           <span className="badge">Le copilote budget des frontaliers 🇫🇷 → 🇱🇺</span>
           <h1>Ton budget te prévient avant qu’il soit trop tard.</h1>
           <p className="lead">
-            FrontaBudget analyse tes dépenses, prévoit la fin du mois et t’envoie
-            les bonnes alertes — sans transformer ta vie en tableur.
+            FrontaBudget analyse tes dépenses, prévoit la fin du mois et transforme
+            tes chiffres en décisions simples — sans tableur compliqué.
           </p>
           <div className="actions">
             <Link className="btn btn-primary" href="/signup">
@@ -41,9 +41,9 @@ export default function HomePage() {
             <p>Détecte un plafond atteint et prévoit les dépenses probables en fin de mois.</p>
           </article>
           <article className="feature-card">
-            <MessageCircleMore />
-            <h3>Résumé WhatsApp</h3>
-            <p>Reçois l’état de ta consommation et une alerte sans ouvrir l’application.</p>
+            <Calculator />
+            <h3>Simulateur d’économies</h3>
+            <p>Teste une réduction par catégorie et découvre son impact mensuel et annuel.</p>
           </article>
           <article className="feature-card">
             <CloudSun />

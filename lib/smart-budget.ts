@@ -17,8 +17,13 @@ export type BudgetSnapshot = {
   savingRate: number;
   dayOfMonth: number;
   daysInMonth: number;
+  daysRemaining: number;
   dailySpend: number;
   projectedExpenses: number;
+  monthlySavingsTarget: number;
+  safeToSpend: number;
+  safeToSpendDaily: number;
+  safeToSpendWeekly: number;
   categories: Array<{ name: string; amount: number }>;
   budgets: BudgetItem[];
 };
@@ -48,12 +53,14 @@ export function buildBudgetSnapshot({
   transactions,
   budgets,
   now = new Date(),
-  alertThreshold = 80
+  alertThreshold = 80,
+  monthlySavingsTarget = 0
 }: {
   transactions: Transaction[];
   budgets: Budget[];
   now?: Date;
   alertThreshold?: number;
+  monthlySavingsTarget?: number;
 }): BudgetSnapshot {
   const income = transactions
     .filter((transaction) => transaction.type === "income")
@@ -74,6 +81,10 @@ export function buildBudgetSnapshot({
   ).getDate();
   const dailySpend = expenses / dayOfMonth;
   const projectedExpenses = dailySpend * daysInMonth;
+  const daysRemaining = Math.max(1, daysInMonth - dayOfMonth + 1);
+  const safeToSpend =
+    income > 0 ? Math.max(0, income - expenses - monthlySavingsTarget) : 0;
+  const safeToSpendDaily = safeToSpend / daysRemaining;
 
   const categoryTotals = new Map<string, number>();
   const categoryLabels = new Map<string, string>();
@@ -129,8 +140,13 @@ export function buildBudgetSnapshot({
     savingRate: income > 0 ? Math.max(0, (remaining / income) * 100) : 0,
     dayOfMonth,
     daysInMonth,
+    daysRemaining,
     dailySpend,
     projectedExpenses,
+    monthlySavingsTarget,
+    safeToSpend,
+    safeToSpendDaily,
+    safeToSpendWeekly: safeToSpendDaily * 7,
     categories,
     budgets: budgetItems
   };
@@ -183,6 +199,12 @@ export function buildLocalInsights(snapshot: BudgetSnapshot): string[] {
     );
   }
 
+  if (snapshot.safeToSpendDaily > 0) {
+    tips.push(
+      `Pour protéger ${Math.round(snapshot.monthlySavingsTarget)} € d’épargne, reste autour de ${Math.round(snapshot.safeToSpendDaily)} € par jour.`
+    );
+  }
+
   const topCategory = snapshot.categories[0];
   if (topCategory) {
     const specific = categoryAdvice[topCategory.name.toLocaleLowerCase("fr")];
@@ -203,4 +225,88 @@ export function buildLocalInsights(snapshot: BudgetSnapshot): string[] {
   }
 
   return tips.slice(0, 3);
+}
+
+export type FinancialHealth = {
+  score: number;
+  label: string;
+  summary: string;
+  signals: Array<{ label: string; positive: boolean }>;
+};
+
+export function calculateFinancialHealth(
+  snapshot: BudgetSnapshot
+): FinancialHealth {
+  let score = 35;
+  const signals: Array<{ label: string; positive: boolean }> = [];
+
+  if (snapshot.income > 0) {
+    score += 15;
+    signals.push({ label: "Revenus renseignés", positive: true });
+  } else {
+    signals.push({ label: "Ajoute ton revenu mensuel", positive: false });
+  }
+
+  if (snapshot.savingRate >= 20) {
+    score += 20;
+    signals.push({ label: "Excellent potentiel d’épargne", positive: true });
+  } else if (snapshot.savingRate >= 10) {
+    score += 12;
+    signals.push({ label: "Épargne en bonne voie", positive: true });
+  } else if (snapshot.savingRate > 0) {
+    score += 5;
+    signals.push({ label: "Marge d’épargne à renforcer", positive: false });
+  } else if (snapshot.expenses > 0) {
+    score -= 10;
+    signals.push({ label: "Dépenses supérieures aux revenus", positive: false });
+  }
+
+  if (snapshot.budgets.length >= 3) {
+    score += 15;
+    signals.push({ label: "Budgets bien structurés", positive: true });
+  } else if (snapshot.budgets.length > 0) {
+    score += 8;
+    signals.push({ label: "Ajoute encore quelques plafonds", positive: false });
+  } else {
+    signals.push({ label: "Aucun plafond défini", positive: false });
+  }
+
+  const exceeded = snapshot.budgets.some((budget) => budget.status === "exceeded");
+  const warning = snapshot.budgets.some((budget) => budget.status === "warning");
+  if (exceeded) {
+    score -= 15;
+    signals.push({ label: "Un budget est dépassé", positive: false });
+  } else if (warning) {
+    score -= 5;
+    signals.push({ label: "Un budget approche sa limite", positive: false });
+  } else if (snapshot.budgets.length) {
+    score += 10;
+    signals.push({ label: "Plafonds sous contrôle", positive: true });
+  }
+
+  if (
+    snapshot.income > 0 &&
+    snapshot.projectedExpenses <=
+      Math.max(0, snapshot.income - snapshot.monthlySavingsTarget)
+  ) {
+    score += 15;
+    signals.push({ label: "Projection compatible avec ton objectif", positive: true });
+  } else if (snapshot.income > 0 && snapshot.projectedExpenses > snapshot.income) {
+    score -= 10;
+    signals.push({ label: "Rythme de dépense trop élevé", positive: false });
+  }
+
+  score = Math.max(0, Math.min(100, score));
+  const label =
+    score >= 80 ? "Excellent" : score >= 65 ? "Solide" : score >= 45 ? "À équilibrer" : "À reprendre";
+  const summary =
+    score >= 80
+      ? "Ton budget est bien maîtrisé. Garde ce rythme."
+      : score >= 65
+        ? "Ta base est saine, quelques ajustements peuvent encore aider."
+        : score >= 45
+          ? "Tu as une bonne visibilité, mais ta marge reste fragile."
+          : "Commence par fixer trois plafonds simples et ton objectif d’épargne.";
+
+  return { score, label, summary, signals: signals.slice(-4) };
 }
