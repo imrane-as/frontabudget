@@ -1,6 +1,8 @@
 -- Security hardening for production. Safe to run after migrations 0001-0005.
 -- This migration is intentionally idempotent for manually managed Supabase projects.
 
+create extension if not exists "pgcrypto";
+
 alter table public.profiles
   add column if not exists weather_city text not null default 'Metz',
   add column if not exists budget_alert_threshold integer not null default 80,
@@ -128,8 +130,39 @@ $$;
 revoke all on function public.consume_ai_quota(uuid, integer) from public, anon;
 grant execute on function public.consume_ai_quota(uuid, integer) to authenticated;
 
+-- Some early FrontaBudget installations were created without the Stripe table.
+-- Recreate it safely before applying the webhook hardening.
+create table if not exists public.subscriptions (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid unique not null references auth.users(id) on delete cascade,
+  stripe_customer_id text unique,
+  stripe_subscription_id text unique,
+  price_id text,
+  plan text not null default 'free' check (plan in ('free','premium')),
+  status text not null default 'inactive',
+  current_period_end timestamptz,
+  stripe_event_created bigint,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.subscriptions
   add column if not exists stripe_event_created bigint;
+
+alter table public.subscriptions enable row level security;
+drop policy if exists "subscriptions_select_own" on public.subscriptions;
+create policy "subscriptions_select_own" on public.subscriptions
+  for select to authenticated
+  using ((select auth.uid()) = user_id);
+
+revoke all on table public.subscriptions from public, anon, authenticated;
+grant select on table public.subscriptions to authenticated;
+grant select, insert, update, delete on table public.subscriptions to service_role;
+
+insert into public.subscriptions(user_id, plan, status)
+select profile.id, 'free', 'active'
+from public.profiles profile
+on conflict (user_id) do nothing;
 
 create table if not exists public.stripe_webhook_events (
   event_id text primary key,
