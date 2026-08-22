@@ -47,6 +47,7 @@
 - [ ] Vercel production séparé
 - [ ] Previews Vercel protégées par authentification
 - [ ] Secrets Vercel marqués « Sensitive » et limités au bon environnement
+- [ ] `BRANDFETCH_CLIENT_ID` configuré pour les logos HD (optionnel)
 - [ ] Error monitoring
 - [ ] Analytics respectueux de la vie privée
 - [ ] Email transactionnel

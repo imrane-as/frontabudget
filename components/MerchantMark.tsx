@@ -19,6 +19,7 @@ export default function MerchantMark({
   const merchant =
     presentation || getMerchantPresentation(name, categoryName || "Autre");
   const [failedDomain, setFailedDomain] = useState<string | null>(null);
+  const usesWideBrandLogo = merchant.domain === "cetelem.fr";
   const style: CSSProperties = {
     backgroundColor: merchant.accent,
     color: merchant.foreground
@@ -27,7 +28,9 @@ export default function MerchantMark({
   return (
     <span
       aria-hidden="true"
-      className={`merchant-mark${merchant.wide ? " merchant-mark-wide" : ""}`}
+      className={`merchant-mark${merchant.wide ? " merchant-mark-wide" : ""}${
+        usesWideBrandLogo ? " merchant-mark-brand-wide" : ""
+      }`}
       style={style}
     >
       <span className="merchant-mark-fallback">{merchant.logoText}</span>
