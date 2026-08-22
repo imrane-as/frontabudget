@@ -1,6 +1,17 @@
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
-import { ArrowDownRight, ArrowUpRight, Gauge, PiggyBank, Wallet } from "lucide-react";
+import Link from "next/link";
+import {
+  ArrowDownRight,
+  ArrowRight,
+  ArrowUpRight,
+  Gauge,
+  PiggyBank,
+  Plus,
+  Sparkles,
+  Target,
+  Wallet
+} from "lucide-react";
 import BudgetAlerts from "@/components/BudgetAlerts";
 import DashboardChart from "@/components/DashboardChart";
 import FinancialHealthCard from "@/components/FinancialHealthCard";
@@ -82,24 +93,55 @@ export default async function DashboardPage() {
 
   const goals = goalsResult.data || [];
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
+  const monthProgress = Math.min(
+    100,
+    Math.max(0, (snapshot.dayOfMonth / snapshot.daysInMonth) * 100)
+  );
 
   return (
     <div className="dashboard-page">
       <div className="dashboard-head">
         <div className="page-head">
-          <p className="muted">{format(now, "EEEE d MMMM", { locale: fr })}</p>
+          <span className="dashboard-date">{format(now, "EEEE d MMMM", { locale: fr })}</span>
           <h1>{firstName ? `Bonjour ${firstName}` : "Mon dashboard"}<span className="wave">👋</span></h1>
-          <p className="muted">Ton argent, expliqué clairement en un seul regard.</p>
+          <p className="muted">Ton argent devient plus simple, plus clair et plus motivant.</p>
         </div>
-        <div className="month-pill">Jour {snapshot.dayOfMonth} sur {snapshot.daysInMonth}</div>
+        <div className="month-progress-card">
+          <div>
+            <span>Progression du mois</span>
+            <strong>{Math.round(monthProgress)} %</strong>
+          </div>
+          <div className="month-progress-track"><span style={{ width: `${monthProgress}%` }} /></div>
+          <small>Jour {snapshot.dayOfMonth} sur {snapshot.daysInMonth}</small>
+        </div>
       </div>
 
+      <nav className="dashboard-quick-actions" aria-label="Actions rapides">
+        <Link href="/transactions">
+          <span className="quick-action-icon quick-action-mint"><Plus size={19} /></span>
+          <span><strong>Ajouter</strong><small>Une opération</small></span>
+          <ArrowRight size={16} />
+        </Link>
+        <Link href="/budgets">
+          <span className="quick-action-icon quick-action-sun"><Wallet size={19} /></span>
+          <span><strong>Planifier</strong><small>Un budget</small></span>
+          <ArrowRight size={16} />
+        </Link>
+        <Link href="/goals">
+          <span className="quick-action-icon quick-action-violet"><Target size={19} /></span>
+          <span><strong>Créer</strong><small>Un objectif</small></span>
+          <ArrowRight size={16} />
+        </Link>
+      </nav>
+
       <section className="finance-hero section">
+        <span className="finance-hero-orb finance-hero-orb-one" aria-hidden="true" />
+        <span className="finance-hero-orb finance-hero-orb-two" aria-hidden="true" />
         <div className="finance-hero-main">
-          <span className="hero-kicker"><Wallet size={15} /> Budget disponible</span>
+          <span className="hero-kicker"><Sparkles size={15} /> Budget disponible</span>
           <p>Tu peux encore dépenser</p>
           <strong>{euro(snapshot.safeToSpend)}</strong>
-          <span className="hero-explanation">après avoir protégé {euro(snapshot.monthlySavingsTarget)} d’épargne</span>
+          <span className="hero-explanation">après avoir protégé {euro(snapshot.monthlySavingsTarget)} d’épargne ✨</span>
           <div className="safe-spend-grid">
             <div><span>Par jour</span><strong>{euro(snapshot.safeToSpendDaily)}</strong><small>{snapshot.daysRemaining} jours restants</small></div>
             <div><span>Par semaine</span><strong>{euro(snapshot.safeToSpendWeekly)}</strong><small>rythme conseillé</small></div>
@@ -120,7 +162,7 @@ export default async function DashboardPage() {
 
       <section className="grid grid-2 section analysis-grid">
         <div className="card spending-card">
-          <div className="card-title-row"><div><span className="eyebrow">Où part ton argent ?</span><h3>Répartition des dépenses</h3></div><Gauge aria-hidden="true" /></div>
+          <div className="card-title-row"><div><span className="eyebrow">Où part ton argent ?</span><h3>Répartition des dépenses</h3></div><span className="card-heading-icon"><Gauge aria-hidden="true" /></span></div>
           <SpendingDonut data={snapshot.categories} />
         </div>
         <SavingsSimulator categories={snapshot.categories} />
@@ -141,7 +183,7 @@ export default async function DashboardPage() {
         <div className="card goals-card">
           <span className="eyebrow">Progression</span>
           <h3>Objectifs d’épargne</h3>
-          <p className="muted">Tes principaux objectifs</p>
+          <p className="muted">Vos principaux objectifs</p>
           {goals.length ? (
             <div className="grid goal-list">
               {goals.map((goal) => {
@@ -158,7 +200,7 @@ export default async function DashboardPage() {
               })}
             </div>
           ) : (
-            <div className="empty-goal"><span>🎯</span><p>Ajoute ton premier objectif pour visualiser ta progression.</p></div>
+            <div className="empty-goal"><span>🎯</span><p>Ajoute ton premier objectif pour visualiser ta progression.</p><Link href="/goals" className="btn btn-compact">Créer un objectif</Link></div>
           )}
         </div>
       </section>

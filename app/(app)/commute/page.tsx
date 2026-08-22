@@ -1,5 +1,7 @@
+import { Building2, Car, Gauge, MapPinned, Route } from "lucide-react";
 import CommuteForm from "@/components/CommuteForm";
 import MetricCard from "@/components/MetricCard";
+import PageIntro from "@/components/PageIntro";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
 
@@ -25,24 +27,31 @@ export default async function CommutePage() {
     Number(profile?.other_cost_month ?? 0);
 
   return (
-    <div>
-      <div className="page-head">
-        <p className="muted">France → Luxembourg</p>
-        <h1>Coût de mobilité</h1>
-      </div>
+    <div className="page-shell commute-page">
+      <PageIntro
+        eyebrow="France → Luxembourg"
+        title="Coût de mobilité"
+        tone="blue"
+        icon={<Car size={26} />}
+        description="Visualise le vrai coût de tes trajets et repère les économies possibles."
+        aside={<span className="page-feature-pill"><MapPinned size={14} /> {days} jours sur site</span>}
+      />
 
-      <section className="grid grid-4">
-        <MetricCard label="Distance mensuelle" value={`${km.toLocaleString("fr-FR")} km`} />
-        <MetricCard label="Coût mobilité" value={euro(total)} tone="negative" />
-        <MetricCard label="Jours sur site" value={`${days}`} />
+      <section className="grid grid-4 content-section metric-grid">
+        <MetricCard label="Distance mensuelle" value={`${km.toLocaleString("fr-FR")} km`} accent="blue" icon={<Route size={18} />} />
+        <MetricCard label="Coût mobilité" value={euro(total)} tone="negative" accent="rose" icon={<Car size={18} />} />
+        <MetricCard label="Jours sur site" value={`${days}`} accent="violet" icon={<Building2 size={18} />} />
         <MetricCard
           label="Coût / jour sur site"
           value={days > 0 ? euro(total / days) : euro(0)}
+          icon={<Gauge size={18} />}
         />
       </section>
 
-      <section className="card section" style={{ maxWidth: 760 }}>
+      <section className="card section form-feature-card commute-form-card">
+        <span className="eyebrow">Simulateur personnel</span>
         <h3>Mes paramètres de trajet</h3>
+        <p className="muted">Ajuste tes coûts pour obtenir une estimation mensuelle fidèle.</p>
         <CommuteForm initial={profile} />
       </section>
     </div>

@@ -12,15 +12,23 @@ import {
   WalletCards
 } from "lucide-react";
 
-const items = [
+const primaryItems = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { href: "/budgets", label: "Budgets", icon: WalletCards },
-  { href: "/goals", label: "Objectifs", icon: Goal },
+  { href: "/goals", label: "Objectifs", icon: Goal }
+];
+
+const dailyItems = [
   { href: "/commute", label: "Trajets", icon: Car },
-  { href: "/work-calendar", label: "Télétravail", icon: BriefcaseBusiness },
+  { href: "/work-calendar", label: "Télétravail", icon: BriefcaseBusiness }
+];
+
+const settingsItem = [
   { href: "/settings", label: "Paramètres", icon: Settings }
 ];
+
+const mobileItems = [...primaryItems, dailyItems[0]];
 
 export default function AppNav() {
   const pathname = usePathname();
@@ -30,31 +38,60 @@ export default function AppNav() {
       <aside className="sidebar">
         <Link href="/dashboard" className="logo">
           <span className="logo-mark">F</span>
-          <span>Fronta<strong>Budget</strong></span>
+          <span className="logo-copy">
+            <span>Fronta<strong>Budget</strong></span>
+            <small>Ton copilote financier</small>
+          </span>
         </Link>
-        <div className="sidebar-label">Mon espace</div>
+        <div className="sidebar-label">Piloter</div>
         <nav className="nav">
-          {items.map(({ href, label, icon: Icon }) => {
+          {primaryItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} className={active ? "active" : ""}>
-                <Icon size={18} />
+              <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+                <span className="nav-icon"><Icon size={18} /></span>
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="sidebar-label sidebar-label-spaced">Au quotidien</div>
+        <nav className="nav">
+          {dailyItems.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+                <span className="nav-icon"><Icon size={18} /></span>
                 <span>{label}</span>
               </Link>
             );
           })}
         </nav>
         <div className="sidebar-foot">
-          <span>✨ Coach intelligent</span>
-          <small>Analyse locale + IA à la demande</small>
+          <span className="sidebar-foot-icon" aria-hidden="true">✨</span>
+          <div>
+            <strong>Coach intelligent</strong>
+            <small>Analyse locale + IA à la demande</small>
+          </div>
         </div>
+        <nav className="nav nav-settings">
+          {settingsItem.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+                <span className="nav-icon"><Icon size={18} /></span>
+                <span>{label}</span>
+              </Link>
+            );
+          })}
+        </nav>
       </aside>
 
       <nav className="mobile-nav">
-        {items.slice(0, 5).map(({ href, label, icon: Icon }) => {
+        {mobileItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
-            <Link key={href} href={href} className={active ? "active" : ""}>
+            <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
               <Icon size={18} />
               <span>{label}</span>
             </Link>

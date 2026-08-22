@@ -1,7 +1,9 @@
+import { ArrowLeftRight, Sparkles } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
 import TransactionForm from "@/components/TransactionForm";
 import MerchantMark from "@/components/MerchantMark";
+import PageIntro from "@/components/PageIntro";
 import { getMerchantPresentation } from "@/lib/transaction-categorizer";
 
 export const dynamic = "force-dynamic";
@@ -69,15 +71,20 @@ export default async function TransactionsPage() {
   }
 
   return (
-    <div>
-      <div className="page-head">
-        <p className="muted">Revenus, dépenses et classement intelligent</p>
-        <h1>Transactions</h1>
-        <p className="muted transaction-intro">
-          Saisis un commerçant : la catégorie et son identité visuelle apparaissent
-          automatiquement.
-        </p>
-      </div>
+    <div className="page-shell transactions-page">
+      <PageIntro
+        eyebrow="Revenus et dépenses"
+        title="Transactions"
+        tone="violet"
+        icon={<ArrowLeftRight size={26} />}
+        aside={<span className="page-feature-pill"><Sparkles size={14} /> IA + logos</span>}
+        description={
+          <span className="transaction-intro">
+            Saisis un commerçant : la catégorie et son identité visuelle apparaissent
+            automatiquement.
+          </span>
+        }
+      />
 
       {(transactionsError || categoriesResult.error) && (
         <div className="error" style={{ marginBottom: 18 }}>
@@ -86,7 +93,7 @@ export default async function TransactionsPage() {
         </div>
       )}
 
-      <section className="grid transaction-grid">
+      <section className="grid transaction-grid content-section">
         <div className="card transaction-entry-card">
           <div className="card-title-row">
             <div>

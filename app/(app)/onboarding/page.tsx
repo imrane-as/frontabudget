@@ -1,6 +1,8 @@
 "use client";
 
 import { FormEvent, useState } from "react";
+import { Check, MapPinned, ShieldCheck, Sparkles, Wallet } from "lucide-react";
+import PageIntro from "@/components/PageIntro";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -56,14 +58,23 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div>
-      <div className="page-head">
-        <p className="muted">Configuration initiale</p>
-        <h1>Bienvenue sur FrontaBudget 👋</h1>
-      </div>
+    <div className="page-shell onboarding-page">
+      <PageIntro
+        eyebrow="Configuration initiale"
+        title="Bienvenue sur FrontaBudget 👋"
+        tone="mint"
+        icon={<Sparkles size={26} />}
+        description="Quelques informations suffisent pour créer un espace vraiment adapté à ta vie de frontalier."
+        aside={<span className="page-feature-pill"><ShieldCheck size={14} /> Données privées</span>}
+      />
 
-      <div className="card" style={{ maxWidth: 700 }}>
+      <section className="onboarding-grid content-section">
+      <div className="card onboarding-form-card form-feature-card">
+        <div className="onboarding-step"><span>Étape 1 sur 1</span><div><i /><i /><i /></div></div>
+        <h3>Personnalise ton espace</h3>
+        <p className="muted">Tu pourras modifier ces choix à tout moment dans les paramètres.</p>
         <form className="form" onSubmit={submit}>
+          <div className="onboarding-fields">
           <label>
             Pays de résidence
             <select value={residence} onChange={(e) => setResidence(e.target.value)}>
@@ -122,12 +133,25 @@ export default function OnboardingPage() {
               <option>Gérer mon budget</option>
             </select>
           </label>
+          </div>
 
           <button className="btn btn-primary" disabled={loading}>
             {loading ? "Configuration..." : "Créer mon espace"}
           </button>
         </form>
       </div>
+
+      <aside className="card onboarding-benefits">
+        <div className="onboarding-benefits-visual"><span>🌱</span><i /><i /></div>
+        <span className="eyebrow">Ton espace évolue avec toi</span>
+        <h3>Un budget utile dès le premier jour</h3>
+        <div className="onboarding-benefit-list">
+          <div><span><Wallet size={16} /></span><p><strong>Budget protégé</strong><small>Ton épargne reste visible avant chaque décision.</small></p><Check size={15} /></div>
+          <div><span><MapPinned size={16} /></span><p><strong>Vie frontalière</strong><small>Trajets et journées Luxembourg au même endroit.</small></p><Check size={15} /></div>
+          <div><span><Sparkles size={16} /></span><p><strong>Conseils intelligents</strong><small>Des recommandations simples, jamais envahissantes.</small></p><Check size={15} /></div>
+        </div>
+      </aside>
+      </section>
     </div>
   );
 }

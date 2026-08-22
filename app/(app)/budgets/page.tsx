@@ -1,7 +1,9 @@
 import { endOfMonth, format, startOfMonth } from "date-fns";
+import { CalendarDays, WalletCards } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
 import BudgetForm from "@/components/BudgetForm";
+import PageIntro from "@/components/PageIntro";
 import { buildBudgetSnapshot } from "@/lib/smart-budget";
 
 export const dynamic = "force-dynamic";
@@ -70,12 +72,15 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   });
 
   return (
-    <div>
-      <div className="page-head">
-        <p className="muted">Plafonds mensuels</p>
-        <h1>Budgets</h1>
-        <p className="muted">Période affichée : {month}/{year}</p>
-      </div>
+    <div className="page-shell budgets-page">
+      <PageIntro
+        eyebrow="Plafonds mensuels"
+        title="Budgets"
+        tone="sun"
+        icon={<WalletCards size={26} />}
+        description="Donne une mission à chaque euro et garde le contrôle sans te priver."
+        aside={<span className="page-feature-pill"><CalendarDays size={14} /> {month}/{year}</span>}
+      />
 
       {(budgetsResult.error || transactionsResult.error || categoriesResult.error) && (
         <div className="error" style={{ marginBottom: 18 }}>
@@ -83,9 +88,11 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
         </div>
       )}
 
-      <section className="grid grid-2">
-        <div className="card">
+      <section className="grid grid-2 content-section page-content-grid">
+        <div className="card form-feature-card budget-form-card">
+          <span className="eyebrow">Planification</span>
           <h3>Définir un budget</h3>
+          <p className="muted">Choisis une catégorie et fixe un plafond réaliste.</p>
           <BudgetForm
             categories={categoriesResult.data || []}
             initialMonth={month}
@@ -93,8 +100,11 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
           />
         </div>
 
-        <div className="card">
-          <h3>Budgets de {month}/{year}</h3>
+        <div className="card budget-overview-card">
+          <div className="card-title-row">
+            <div><span className="eyebrow">Suivi en direct</span><h3>Budgets de {month}/{year}</h3></div>
+            <span className="card-heading-icon card-heading-sun"><WalletCards size={18} /></span>
+          </div>
           {snapshot.budgets.length ? (
             <div className="grid budget-list">
               {snapshot.budgets.map((budget) => (
@@ -119,7 +129,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
               ))}
             </div>
           ) : (
-            <p className="muted">Crée un premier plafond pour activer les alertes.</p>
+            <div className="friendly-empty"><span>🪄</span><strong>Prêt à organiser ton mois</strong><p>Crée un premier plafond pour activer les alertes intelligentes.</p></div>
           )}
         </div>
       </section>
