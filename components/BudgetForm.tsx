@@ -1,46 +1,61 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  saveBudget,
+  type SaveBudgetResult
+} from "@/app/(app)/budgets/actions";
 
-export default function BudgetForm() {
-  const supabase = createClient();
+type Props = {
+  categories: { id: string; name: string }[];
+  initialMonth: number;
+  initialYear: number;
+};
+
+export default function BudgetForm({
+  categories,
+  initialMonth,
+  initialYear
+}: Props) {
   const router = useRouter();
-
-  const now = new Date();
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [categoryId, setCategoryId] = useState("");
   const [amount, setAmount] = useState("");
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
-
-  useEffect(() => {
-    supabase
-      .from("categories")
-      .select("id,name")
-      .eq("type", "expense")
-      .order("name")
-      .then(({ data }) => setCategories(data || []));
-  }, [supabase]);
+  const [month, setMonth] = useState(initialMonth);
+  const [year, setYear] = useState(initialYear);
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState<SaveBudgetResult | null>(null);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    setLoading(true);
+    setResult(null);
 
-    await supabase.from("budgets").upsert(
-      {
-        user_id: user.id,
-        category_id: categoryId,
+    let saveResult: SaveBudgetResult;
+
+    try {
+      saveResult = await saveBudget({
+        categoryId,
+        amount: Number(amount),
         month,
-        year,
-        planned_amount: Number(amount)
-      },
-      { onConflict: "user_id,category_id,month,year" }
-    );
+        year
+      });
+    } catch {
+      saveResult = {
+        ok: false,
+        message: "La connexion a échoué. Recharge la page puis réessaie."
+      };
+    }
+
+    setResult(saveResult);
+    setLoading(false);
+
+    if (!saveResult.ok) {
+      return;
+    }
 
     setAmount("");
+    router.replace(`/budgets?month=${month}&year=${year}`);
     router.refresh();
   }
 
@@ -62,6 +77,7 @@ export default function BudgetForm() {
           required
           type="number"
           min="0"
+          max="1000000000"
           step="0.01"
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
@@ -84,13 +100,25 @@ export default function BudgetForm() {
           <input
             type="number"
             min="2020"
+            max="2100"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
           />
         </label>
       </div>
 
-      <button className="btn btn-primary">Enregistrer le budget</button>
+      {result && (
+        <div
+          aria-live="polite"
+          className={result.ok ? "success" : "error"}
+        >
+          {result.message}
+        </div>
+      )}
+
+      <button className="btn btn-primary" disabled={loading || !categories.length}>
+        {loading ? "Enregistrement..." : "Enregistrer le budget"}
+      </button>
     </form>
   );
 }
