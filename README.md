@@ -204,6 +204,7 @@ Pour activer le bouton « Affiner avec l'IA », ajouter :
 OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6-luna
 OPENAI_SEARCH_MODEL=gpt-5.6-luna
+BRANDFETCH_CLIENT_ID=
 ```
 
 Le coach n'envoie à l'IA que des agrégats (totaux, catégories et budgets). Pour
@@ -213,6 +214,12 @@ l'IA avec son seul libellé, sans montant, date, identité ni budget. Le domaine
 officiel et la source sont conservés avec la transaction. Ce repli est limité à
 30 libellés par utilisateur et par jour. L'analyse du coach reste limitée à 3
 demandes par utilisateur et par jour.
+
+`BRANDFETCH_CLIENT_ID` est optionnel et permet d'obtenir des logos de marque HD
+pour tous les domaines reconnus par l'IA. Sans cette variable, FrontaBudget
+utilise un logo vérifié pour les marques principales puis le favicon officiel du
+domaine. Les images passent toujours par le proxy serveur et ne sont jamais
+chargées directement depuis une URL arbitraire renvoyée par l'IA.
 
 ## 10. Déploiement Vercel
 
@@ -308,4 +315,5 @@ SUPABASE_SERVICE_ROLE_KEY
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 OPENAI_API_KEY
+BRANDFETCH_CLIENT_ID
 ```

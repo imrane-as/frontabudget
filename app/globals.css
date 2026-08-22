@@ -834,6 +834,14 @@ input[type="range"] {
   letter-spacing: -.02em;
 }
 
+.merchant-mark-brand-wide {
+  width: 82px;
+}
+
+.merchant-mark-brand-wide .merchant-logo-image {
+  padding: 4px 6px;
+}
+
 .merchant-cell {
   display: flex;
   align-items: center;
