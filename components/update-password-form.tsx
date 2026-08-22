@@ -33,10 +33,9 @@ export function UpdatePasswordForm({
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      // Update this route to redirect to an authenticated route. The user already has an active session.
-      router.push("/protected");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      router.push("/dashboard");
+    } catch {
+      setError("Impossible de modifier le mot de passe. Demande un nouveau lien.");
     } finally {
       setIsLoading(false);
     }
@@ -60,6 +59,8 @@ export function UpdatePasswordForm({
                   id="password"
                   type="password"
                   placeholder="New password"
+                  autoComplete="new-password"
+                  minLength={12}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

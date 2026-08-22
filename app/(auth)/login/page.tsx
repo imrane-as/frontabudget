@@ -25,7 +25,7 @@ export default function LoginPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError("Connexion impossible. Vérifie ton email et ton mot de passe.");
       setLoading(false);
       return;
     }
@@ -48,6 +48,8 @@ export default function LoginPage() {
             Email
             <input
               type="email"
+              autoComplete="email"
+              maxLength={254}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -58,6 +60,7 @@ export default function LoginPage() {
             Mot de passe
             <input
               type="password"
+              autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -70,6 +73,9 @@ export default function LoginPage() {
         </form>
 
         <p className="auth-note" style={{ marginTop: 18 }}>
+          <Link href="/auth/forgot-password">Mot de passe oublié ?</Link>
+        </p>
+        <p className="auth-note" style={{ marginTop: 10 }}>
           Pas encore de compte ? <Link href="/signup">Créer un compte</Link>
         </p>
       </div>
