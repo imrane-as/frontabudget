@@ -1,5 +1,6 @@
 import CheckoutButtons from "@/components/CheckoutButtons";
 import LogoutButton from "@/components/LogoutButton";
+import NotificationSettingsForm from "@/components/NotificationSettingsForm";
 import { requireUser } from "@/lib/auth";
 
 export default async function SettingsPage() {
@@ -7,7 +8,7 @@ export default async function SettingsPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name,residence_country,work_country")
+    .select("full_name,residence_country,work_country,weather_city,budget_alert_threshold,whatsapp_phone,whatsapp_enabled,weekly_summary_enabled")
     .eq("id", user.id)
     .single();
 
@@ -45,6 +46,25 @@ export default async function SettingsPage() {
           </p>
           <CheckoutButtons />
         </div>
+      </section>
+
+      <section className="card section settings-card">
+        <div className="card-title-row">
+          <div>
+            <span className="eyebrow">Assistant intelligent</span>
+            <h3>Météo et alertes</h3>
+          </div>
+        </div>
+        <p className="muted">
+          Choisis ta ville, ton seuil de sécurité et les résumés que tu veux recevoir.
+        </p>
+        <NotificationSettingsForm
+          initialCity={profile?.weather_city || "Metz"}
+          initialThreshold={Number(profile?.budget_alert_threshold) || 80}
+          initialPhone={profile?.whatsapp_phone || ""}
+          initialWhatsAppEnabled={Boolean(profile?.whatsapp_enabled)}
+          initialWeeklySummaryEnabled={profile?.weekly_summary_enabled !== false}
+        />
       </section>
     </div>
   );

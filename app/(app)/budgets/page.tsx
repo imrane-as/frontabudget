@@ -2,28 +2,40 @@ import { endOfMonth, format, startOfMonth } from "date-fns";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
 import BudgetForm from "@/components/BudgetForm";
+import { buildBudgetSnapshot } from "@/lib/smart-budget";
 
 export default async function BudgetsPage() {
   const { supabase, user } = await requireUser();
   const now = new Date();
 
-  const { data: budgets } = await supabase
-    .from("budgets")
-    .select("id,planned_amount,month,year,category_id,categories(name)")
-    .eq("user_id", user.id)
-    .eq("month", now.getMonth() + 1)
-    .eq("year", now.getFullYear());
-
   const start = format(startOfMonth(now), "yyyy-MM-dd");
   const end = format(endOfMonth(now), "yyyy-MM-dd");
+  const [budgetsResult, transactionsResult, profileResult] = await Promise.all([
+    supabase
+      .from("budgets")
+      .select("id,planned_amount,month,year,category_id,categories(name)")
+      .eq("user_id", user.id)
+      .eq("month", now.getMonth() + 1)
+      .eq("year", now.getFullYear()),
+    supabase
+      .from("transactions")
+      .select("amount,type,category_id,categories(name)")
+      .eq("user_id", user.id)
+      .gte("transaction_date", start)
+      .lte("transaction_date", end),
+    supabase
+      .from("profiles")
+      .select("budget_alert_threshold")
+      .eq("id", user.id)
+      .maybeSingle()
+  ]);
 
-  const { data: expenses } = await supabase
-    .from("transactions")
-    .select("amount,category_id")
-    .eq("user_id", user.id)
-    .eq("type", "expense")
-    .gte("transaction_date", start)
-    .lte("transaction_date", end);
+  const snapshot = buildBudgetSnapshot({
+    transactions: transactionsResult.data || [],
+    budgets: budgetsResult.data || [],
+    now,
+    alertThreshold: Number(profileResult.data?.budget_alert_threshold) || 80
+  });
 
   return (
     <div>
@@ -40,29 +52,32 @@ export default async function BudgetsPage() {
 
         <div className="card">
           <h3>Ce mois-ci</h3>
-          <div className="grid">
-            {budgets?.map((budget) => {
-              const spent =
-                expenses
-                  ?.filter((x) => x.category_id === budget.category_id)
-                  .reduce((sum, x) => sum + Number(x.amount), 0) ?? 0;
-
-              const planned = Number(budget.planned_amount);
-              const pct = planned > 0 ? Math.min(100, (spent / planned) * 100) : 0;
-
-              return (
-                <div key={budget.id}>
-                  <div style={{ display: "flex", justifyContent: "space-between" }}>
-                    <strong>{(budget.categories as unknown as { name: string } | null)?.name || "Catégorie"}</strong>
-                    <span className="muted">{euro(spent)} / {euro(planned)}</span>
+          {snapshot.budgets.length ? (
+            <div className="grid budget-list">
+              {snapshot.budgets.map((budget) => (
+                <div className={`budget-line budget-${budget.status}`} key={budget.id}>
+                  <div className="split-row">
+                    <div>
+                      <strong>{budget.categoryName}</strong>
+                      <small>
+                        {budget.status === "exceeded"
+                          ? "Budget dépassé"
+                          : budget.status === "warning"
+                            ? "Seuil d’alerte atteint"
+                            : `Projection : ${euro(budget.projected)}`}
+                      </small>
+                    </div>
+                    <span className="muted">{euro(budget.spent)} / {euro(budget.planned)}</span>
                   </div>
                   <div className="progress" style={{ marginTop: 9 }}>
-                    <div style={{ width: `${pct}%` }} />
+                    <div style={{ width: `${Math.min(100, budget.percentage)}%` }} />
                   </div>
                 </div>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="muted">Crée un premier plafond pour activer les alertes.</p>
+          )}
         </div>
       </section>
     </div>

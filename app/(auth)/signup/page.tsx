@@ -5,8 +5,6 @@ import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function SignupPage() {
-  const supabase = createClient();
-
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -19,6 +17,7 @@ export default function SignupPage() {
     setLoading(true);
     setError(null);
     setMessage(null);
+    const supabase = createClient();
 
     const origin = window.location.origin;
 

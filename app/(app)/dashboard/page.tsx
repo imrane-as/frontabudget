@@ -1,105 +1,147 @@
-import { startOfMonth, endOfMonth, subMonths, format } from "date-fns";
+import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+import BudgetAlerts from "@/components/BudgetAlerts";
+import DashboardChart from "@/components/DashboardChart";
+import MetricCard from "@/components/MetricCard";
+import SmartCoach from "@/components/SmartCoach";
+import WeatherCard from "@/components/WeatherCard";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
-import MetricCard from "@/components/MetricCard";
-import DashboardChart from "@/components/DashboardChart";
+import { buildBudgetSnapshot, buildLocalInsights } from "@/lib/smart-budget";
+import { getWeather } from "@/lib/weather";
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
-
   const now = new Date();
   const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
   const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
+  const historyStart = format(startOfMonth(subMonths(now, 5)), "yyyy-MM-dd");
 
-  const { data: current } = await supabase
-    .from("transactions")
-    .select("amount,type,transaction_date")
-    .eq("user_id", user.id)
-    .gte("transaction_date", monthStart)
-    .lte("transaction_date", monthEnd);
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name,weather_city,budget_alert_threshold")
+    .eq("id", user.id)
+    .maybeSingle();
 
-  const income =
-    current
-      ?.filter((x) => x.type === "income")
-      .reduce((sum, x) => sum + Number(x.amount), 0) ?? 0;
+  const alertThreshold = Number(profile?.budget_alert_threshold) || 80;
+  const [transactionsResult, budgetsResult, goalsResult, weather] =
+    await Promise.all([
+      supabase
+        .from("transactions")
+        .select("amount,type,transaction_date,category_id,categories(name)")
+        .eq("user_id", user.id)
+        .gte("transaction_date", historyStart)
+        .lte("transaction_date", monthEnd),
+      supabase
+        .from("budgets")
+        .select("id,planned_amount,category_id,categories(name)")
+        .eq("user_id", user.id)
+        .eq("month", now.getMonth() + 1)
+        .eq("year", now.getFullYear()),
+      supabase
+        .from("goals")
+        .select("id,name,current_amount,target_amount")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(3),
+      getWeather(profile?.weather_city || "Metz")
+    ]);
 
-  const expenses =
-    current
-      ?.filter((x) => x.type === "expense")
-      .reduce((sum, x) => sum + Number(x.amount), 0) ?? 0;
-
-  const remaining = income - expenses;
-  const savingRate = income > 0 ? Math.max(0, (remaining / income) * 100) : 0;
+  const allTransactions = transactionsResult.data || [];
+  const currentTransactions = allTransactions.filter(
+    (transaction) =>
+      transaction.transaction_date >= monthStart &&
+      transaction.transaction_date <= monthEnd
+  );
+  const snapshot = buildBudgetSnapshot({
+    transactions: currentTransactions,
+    budgets: budgetsResult.data || [],
+    now,
+    alertThreshold
+  });
 
   const chartData = [];
-
   for (let i = 5; i >= 0; i--) {
     const date = subMonths(now, i);
     const start = format(startOfMonth(date), "yyyy-MM-dd");
     const end = format(endOfMonth(date), "yyyy-MM-dd");
-
-    const { data } = await supabase
-      .from("transactions")
-      .select("amount,type")
-      .eq("user_id", user.id)
-      .gte("transaction_date", start)
-      .lte("transaction_date", end);
+    const monthTransactions = allTransactions.filter(
+      (transaction) =>
+        transaction.transaction_date >= start &&
+        transaction.transaction_date <= end
+    );
 
     chartData.push({
       name: format(date, "MMM", { locale: fr }),
-      revenus:
-        data
-          ?.filter((x) => x.type === "income")
-          .reduce((sum, x) => sum + Number(x.amount), 0) ?? 0,
-      depenses:
-        data
-          ?.filter((x) => x.type === "expense")
-          .reduce((sum, x) => sum + Number(x.amount), 0) ?? 0
+      revenus: monthTransactions
+        .filter((transaction) => transaction.type === "income")
+        .reduce((sum, transaction) => sum + Number(transaction.amount), 0),
+      depenses: monthTransactions
+        .filter((transaction) => transaction.type === "expense")
+        .reduce((sum, transaction) => sum + Number(transaction.amount), 0)
     });
   }
 
-  const { data: goals } = await supabase
-    .from("goals")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .limit(3);
+  const goals = goalsResult.data || [];
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   return (
     <div>
-      <div className="page-head">
-        <p className="muted">{format(now, "MMMM yyyy", { locale: fr })}</p>
-        <h1>Mon dashboard</h1>
+      <div className="dashboard-head">
+        <div className="page-head">
+          <p className="muted">{format(now, "MMMM yyyy", { locale: fr })}</p>
+          <h1>{firstName ? `Bonjour ${firstName} 👋` : "Mon dashboard"}</h1>
+          <p className="muted">Voici l’essentiel pour décider sans ouvrir un tableur.</p>
+        </div>
+        <div className="month-pill">Jour {snapshot.dayOfMonth} sur {snapshot.daysInMonth}</div>
       </div>
 
-      <section className="grid grid-4">
-        <MetricCard label="Revenus" value={euro(income)} />
-        <MetricCard label="Dépenses" value={euro(expenses)} tone="negative" />
+      <BudgetAlerts budgets={snapshot.budgets} />
+
+      <section className="grid grid-4 section">
+        <MetricCard label="Revenus" value={euro(snapshot.income)} detail="ce mois-ci" />
+        <MetricCard
+          label="Dépenses"
+          value={euro(snapshot.expenses)}
+          detail={`${euro(snapshot.dailySpend)} / jour`}
+          tone="negative"
+        />
         <MetricCard
           label="Disponible"
-          value={euro(remaining)}
-          tone={remaining >= 0 ? "positive" : "negative"}
+          value={euro(snapshot.remaining)}
+          detail={`projection dépenses ${euro(snapshot.projectedExpenses)}`}
+          tone={snapshot.remaining >= 0 ? "positive" : "negative"}
         />
         <MetricCard
           label="Taux d’épargne"
-          value={`${savingRate.toFixed(1)} %`}
+          value={`${snapshot.savingRate.toFixed(1)} %`}
           detail="après dépenses enregistrées"
         />
       </section>
 
+      <section className="grid grid-2 section smart-grid">
+        <SmartCoach initialTips={buildLocalInsights(snapshot)} />
+        <WeatherCard weather={weather} />
+      </section>
+
       <section className="grid grid-2 section">
         <div className="card">
-          <h3>Évolution sur 6 mois</h3>
+          <div className="card-title-row">
+            <div>
+              <span className="eyebrow">Tendance</span>
+              <h3>Évolution sur 6 mois</h3>
+            </div>
+          </div>
           <p className="muted">Revenus et dépenses enregistrés</p>
           <DashboardChart data={chartData} />
         </div>
 
         <div className="card">
+          <span className="eyebrow">Progression</span>
           <h3>Objectifs d’épargne</h3>
           <p className="muted">Tes principaux objectifs</p>
 
-          {goals?.length ? (
+          {goals.length ? (
             <div className="grid">
               {goals.map((goal) => {
                 const currentAmount = Number(goal.current_amount);
@@ -111,7 +153,7 @@ export default async function DashboardPage() {
 
                 return (
                   <div key={goal.id}>
-                    <div style={{ display: "flex", justifyContent: "space-between" }}>
+                    <div className="split-row">
                       <strong>{goal.name}</strong>
                       <span className="muted">
                         {euro(currentAmount)} / {euro(targetAmount)}

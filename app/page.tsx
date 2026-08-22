@@ -1,15 +1,16 @@
 import Link from "next/link";
+import { BellRing, BrainCircuit, CloudSun, MessageCircleMore } from "lucide-react";
 
 export default function HomePage() {
   return (
-    <main className="shell">
+    <main className="shell landing">
       <div className="container hero">
         <div className="hero-inner">
-          <span className="badge">Pensé pour les frontaliers 🇫🇷 → 🇱🇺</span>
-          <h1>Ton salaire, ton budget, tes trajets. Enfin au même endroit.</h1>
+          <span className="badge">Le copilote budget des frontaliers 🇫🇷 → 🇱🇺</span>
+          <h1>Ton budget te prévient avant qu’il soit trop tard.</h1>
           <p className="lead">
-            FrontaBudget t’aide à suivre revenus, dépenses, budgets, épargne,
-            mobilité et jours de travail sans transformer ta vie en tableur.
+            FrontaBudget analyse tes dépenses, prévoit la fin du mois et t’envoie
+            les bonnes alertes — sans transformer ta vie en tableur.
           </p>
           <div className="actions">
             <Link className="btn btn-primary" href="/signup">
@@ -19,8 +20,38 @@ export default function HomePage() {
               Se connecter
             </Link>
           </div>
+          <p className="hero-proof">Analyse locale gratuite · IA à la demande · Données protégées par utilisateur</p>
         </div>
       </div>
+
+      <section className="container feature-section">
+        <div className="section-intro">
+          <span className="eyebrow">Simple, utile, intelligent</span>
+          <h2>Les informations dont tu as besoin, au bon moment.</h2>
+        </div>
+        <div className="feature-grid">
+          <article className="feature-card">
+            <BrainCircuit />
+            <h3>Coach budget</h3>
+            <p>Conseils basés sur tes vrais totaux, avec IA activée uniquement à ta demande.</p>
+          </article>
+          <article className="feature-card">
+            <BellRing />
+            <h3>Alertes prédictives</h3>
+            <p>Détecte un plafond atteint et prévoit les dépenses probables en fin de mois.</p>
+          </article>
+          <article className="feature-card">
+            <MessageCircleMore />
+            <h3>Résumé WhatsApp</h3>
+            <p>Reçois l’état de ta consommation et une alerte sans ouvrir l’application.</p>
+          </article>
+          <article className="feature-card">
+            <CloudSun />
+            <h3>Météo utile</h3>
+            <p>Prévisions générales et astuce contextuelle pour économiser sur tes déplacements.</p>
+          </article>
+        </div>
+      </section>
     </main>
   );
 }
