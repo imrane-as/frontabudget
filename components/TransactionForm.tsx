@@ -40,6 +40,15 @@ export default function TransactionForm({ categories }: Props) {
   const [result, setResult] = useState<SaveTransactionResult | null>(null);
 
   const visibleCategories = categories.filter((category) => category.type === type);
+  const suggestedCategoryAvailable = suggestion
+    ? categories.some(
+        (category) =>
+          category.type === type &&
+          category.name.localeCompare(suggestion.categoryName, "fr", {
+            sensitivity: "base"
+          }) === 0
+      )
+    : true;
 
   useEffect(() => {
     const trimmedName = name.trim();
@@ -112,7 +121,11 @@ export default function TransactionForm({ categories }: Props) {
         amount: Number(amount),
         type,
         categoryId: categoryId || null,
-        date
+        date,
+        merchantName: suggestion?.displayName || null,
+        merchantDomain: suggestion?.domain || null,
+        categorizationSource: suggestion?.source || null,
+        categorizationUrl: suggestion?.sourceUrl || null
       });
     } catch {
       saveResult = {
@@ -171,13 +184,25 @@ export default function TransactionForm({ categories }: Props) {
               {suggestion.source === "fallback" && " · à confirmer"}
             </span>
           </div>
-          <span className={`suggestion-source source-${suggestion.source}`}>
-            {suggestion.source === "ai"
-              ? "IA"
-              : suggestion.source === "local"
-                ? "Auto"
-                : "Manuel"}
-          </span>
+          <div className="suggestion-meta">
+            <span className={`suggestion-source source-${suggestion.source}`}>
+              {suggestion.source === "ai"
+                ? "IA + WEB"
+                : suggestion.source === "local"
+                  ? "Auto"
+                  : "Manuel"}
+            </span>
+            {suggestion.sourceUrl && (
+              <a
+                className="suggestion-source-link"
+                href={suggestion.sourceUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+              >
+                Source ↗
+              </a>
+            )}
+          </div>
         </div>
       )}
 
@@ -244,9 +269,10 @@ export default function TransactionForm({ categories }: Props) {
         </label>
       </div>
 
-      {suggestion?.notice && (
+      {(suggestion?.notice || !suggestedCategoryAvailable) && (
         <p className="microcopy" role="status">
-          {suggestion.notice}
+          {suggestion?.notice ||
+            `La catégorie « ${suggestion?.categoryName} » sera disponible après la migration 0008.`}
         </p>
       )}
 
@@ -261,8 +287,8 @@ export default function TransactionForm({ categories }: Props) {
       </button>
 
       <p className="transaction-privacy">
-        Le classement local est prioritaire. Si l’IA est nécessaire, seul le libellé
-        est envoyé — jamais le montant, la date ou votre budget.
+        Les marques connues sont immédiates. Pour un nom inconnu, l’IA recherche le
+        domaine officiel avec le seul libellé — jamais le montant, la date ou le budget.
       </p>
     </form>
   );

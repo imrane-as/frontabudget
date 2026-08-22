@@ -10,6 +10,7 @@ export const EXPENSE_CATEGORY_NAMES = [
   "Téléphone",
   "Assurances",
   "Abonnements",
+  "Crédit",
   "Sport",
   "Shopping",
   "Voyage",
@@ -25,6 +26,7 @@ export type CategorizationSource = "local" | "ai" | "fallback";
 
 export type MerchantPresentation = {
   displayName: string;
+  domain: string | null;
   logoText: string;
   accent: string;
   foreground: string;
@@ -36,9 +38,11 @@ export type CategorizationSuggestion = MerchantPresentation & {
   icon: string;
   confidence: number;
   source: CategorizationSource;
+  sourceUrl: string | null;
 };
 
-type MerchantRule = MerchantPresentation & {
+type MerchantRule = Omit<MerchantPresentation, "domain"> & {
+  domain?: string;
   categoryName: TransactionCategoryName;
   confidence: number;
   pattern: RegExp;
@@ -57,6 +61,7 @@ export const CATEGORY_ICONS: Record<TransactionCategoryName, string> = {
   Téléphone: "📱",
   Assurances: "🛡️",
   Abonnements: "📺",
+  Crédit: "🏦",
   Sport: "🏋️",
   Shopping: "🛍️",
   Voyage: "✈️",
@@ -75,6 +80,7 @@ const CATEGORY_COLORS: Record<TransactionCategoryName, string> = {
   Téléphone: "#0891b2",
   Assurances: "#4f46e5",
   Abonnements: "#7c3aed",
+  Crédit: "#65a30d",
   Sport: "#059669",
   Shopping: "#db2777",
   Voyage: "#0284c7",
@@ -88,6 +94,7 @@ const merchantRules: MerchantRule[] = [
     logoText: "N",
     accent: "#e50914",
     foreground: "#ffffff",
+    domain: "netflix.com",
     categoryName: "Abonnements",
     confidence: 0.99
   },
@@ -97,6 +104,7 @@ const merchantRules: MerchantRule[] = [
     logoText: "D+",
     accent: "#113ccf",
     foreground: "#ffffff",
+    domain: "disneyplus.com",
     categoryName: "Abonnements",
     confidence: 0.99
   },
@@ -106,6 +114,7 @@ const merchantRules: MerchantRule[] = [
     logoText: "▶",
     accent: "#00a8e1",
     foreground: "#031b2d",
+    domain: "primevideo.com",
     categoryName: "Abonnements",
     confidence: 0.98
   },
@@ -115,8 +124,49 @@ const merchantRules: MerchantRule[] = [
     logoText: "S",
     accent: "#1ed760",
     foreground: "#07150c",
+    domain: "spotify.com",
     categoryName: "Abonnements",
     confidence: 0.99
+  },
+  {
+    pattern: /\b(apple(?:\.com)?\s+bill|apple services|itunes(?:\.com)?\s+bill)\b/,
+    displayName: "Apple",
+    logoText: "A",
+    accent: "#e5e7eb",
+    foreground: "#111827",
+    domain: "apple.com",
+    categoryName: "Abonnements",
+    confidence: 0.99
+  },
+  {
+    pattern: /\b(cetelem|bnpp personal finance)\b/,
+    displayName: "Cetelem",
+    logoText: "C",
+    accent: "#7ab800",
+    foreground: "#ffffff",
+    domain: "cetelem.fr",
+    categoryName: "Crédit",
+    confidence: 0.99
+  },
+  {
+    pattern: /\b(cofidis)\b/,
+    displayName: "Cofidis",
+    logoText: "C",
+    accent: "#dc2626",
+    foreground: "#ffffff",
+    domain: "cofidis.fr",
+    categoryName: "Crédit",
+    confidence: 0.98
+  },
+  {
+    pattern: /\b(sofinco)\b/,
+    displayName: "Sofinco",
+    logoText: "S",
+    accent: "#16a34a",
+    foreground: "#ffffff",
+    domain: "sofinco.fr",
+    categoryName: "Crédit",
+    confidence: 0.98
   },
   {
     pattern: /\b(deezer|apple music|youtube premium|canal\s*\+|paramount\s*\+|max hbo|hbo max)\b/,
@@ -133,6 +183,7 @@ const merchantRules: MerchantRule[] = [
     logoText: "sosh",
     accent: "#d6f000",
     foreground: "#111827",
+    domain: "sosh.fr",
     wide: true,
     categoryName: "Téléphone",
     confidence: 0.99
@@ -143,6 +194,7 @@ const merchantRules: MerchantRule[] = [
     logoText: "O",
     accent: "#ff7900",
     foreground: "#111111",
+    domain: "orange.fr",
     categoryName: "Téléphone",
     confidence: 0.96
   },
@@ -161,6 +213,7 @@ const merchantRules: MerchantRule[] = [
     logoText: "iP",
     accent: "#e5e7eb",
     foreground: "#111827",
+    domain: "apple.com",
     categoryName: "Téléphone",
     confidence: 0.98
   },
@@ -183,7 +236,37 @@ const merchantRules: MerchantRule[] = [
     confidence: 0.96
   },
   {
-    pattern: /\b(carrefour|auchan|lidl|aldi|e\.?\s*leclerc|intermarche|monoprix|franprix|casino supermarche|super u|match)\b/,
+    pattern: /\bcarrefour\b/,
+    displayName: "Carrefour",
+    logoText: "C",
+    accent: "#1d4ed8",
+    foreground: "#ffffff",
+    domain: "carrefour.fr",
+    categoryName: "Courses",
+    confidence: 0.98
+  },
+  {
+    pattern: /\blidl\b/,
+    displayName: "Lidl",
+    logoText: "L",
+    accent: "#0050aa",
+    foreground: "#fff000",
+    domain: "lidl.fr",
+    categoryName: "Courses",
+    confidence: 0.98
+  },
+  {
+    pattern: /\be\.?\s*leclerc\b/,
+    displayName: "E.Leclerc",
+    logoText: "E",
+    accent: "#0b75bb",
+    foreground: "#ffffff",
+    domain: "e.leclerc",
+    categoryName: "Courses",
+    confidence: 0.98
+  },
+  {
+    pattern: /\b(auchan|aldi|intermarche|monoprix|franprix|casino supermarche|super u|match)\b/,
     displayName: "Supermarché",
     logoText: "🛒",
     accent: "#16a34a",
@@ -237,7 +320,27 @@ const merchantRules: MerchantRule[] = [
     confidence: 0.92
   },
   {
-    pattern: /\b(amazon(?! prime)|zalando|shein|h\s*&\s*m|zara|uniqlo|cdiscount|fnac|darty|boulanger)\b/,
+    pattern: /\bamazon(?! prime)\b/,
+    displayName: "Amazon",
+    logoText: "a",
+    accent: "#131921",
+    foreground: "#ff9900",
+    domain: "amazon.fr",
+    categoryName: "Shopping",
+    confidence: 0.98
+  },
+  {
+    pattern: /\bzalando\b/,
+    displayName: "Zalando",
+    logoText: "Z",
+    accent: "#ff6900",
+    foreground: "#ffffff",
+    domain: "zalando.fr",
+    categoryName: "Shopping",
+    confidence: 0.98
+  },
+  {
+    pattern: /\b(shein|h\s*&\s*m|zara|uniqlo|cdiscount|fnac|darty|boulanger)\b/,
     displayName: "Shopping",
     logoText: "SHOP",
     accent: "#db2777",
@@ -329,6 +432,7 @@ export function categorizeLocally(
 
   return {
     displayName: rule.displayName,
+    domain: rule.domain || null,
     logoText: rule.logoText,
     accent: rule.accent,
     foreground: rule.foreground,
@@ -336,7 +440,8 @@ export function categorizeLocally(
     categoryName: rule.categoryName,
     icon: CATEGORY_ICONS[rule.categoryName],
     confidence: rule.confidence,
-    source: "local"
+    source: "local",
+    sourceUrl: rule.domain ? `https://${rule.domain}` : null
   };
 }
 
@@ -357,13 +462,15 @@ function initials(name: string) {
 
 export function getMerchantPresentation(
   name: string,
-  categoryName: TransactionCategoryName | string = "Autre"
+  categoryName: TransactionCategoryName | string = "Autre",
+  domain?: string | null
 ): MerchantPresentation {
   const rule = findRule(name);
 
   if (rule) {
     return {
       displayName: rule.displayName,
+      domain: rule.domain || null,
       logoText: rule.logoText,
       accent: rule.accent,
       foreground: rule.foreground,
@@ -380,6 +487,7 @@ export function getMerchantPresentation(
 
   return {
     displayName: name.trim() || "Transaction",
+    domain: normalizeMerchantDomain(domain),
     logoText: initials(name),
     accent: CATEGORY_COLORS[resolvedCategory],
     foreground: "#ffffff"
@@ -399,7 +507,8 @@ export function buildFallbackSuggestion(
     categoryName,
     icon: CATEGORY_ICONS[categoryName],
     confidence: 0.35,
-    source: "fallback"
+    source: "fallback",
+    sourceUrl: null
   };
 }
 
@@ -421,4 +530,37 @@ export function sanitizeMerchantDisplayName(value: string, fallback: string) {
     .slice(0, 80);
 
   return cleaned || fallback.trim().slice(0, 80) || "Transaction";
+}
+
+export function normalizeMerchantDomain(value: string | null | undefined) {
+  if (!value) {
+    return null;
+  }
+
+  const domain = value.trim().toLocaleLowerCase("en").replace(/\.$/, "");
+
+  if (
+    domain.length > 253 ||
+    !domain.includes(".") ||
+    (domain.startsWith("www.") && domain.length <= 4) ||
+    /^\d{1,3}(?:\.\d{1,3}){3}$/.test(domain)
+  ) {
+    return null;
+  }
+
+  const normalized = domain.startsWith("www.") ? domain.slice(4) : domain;
+  const labels = normalized.split(".");
+
+  if (
+    labels.some(
+      (label) =>
+        !label ||
+        label.length > 63 ||
+        !/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/.test(label)
+    )
+  ) {
+    return null;
+  }
+
+  return normalized;
 }
