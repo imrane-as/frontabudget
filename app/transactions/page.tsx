@@ -1,3 +1,5 @@
+export const instant = false;
+
 import { createClient } from "@/lib/supabase/server";
 import AddTransactionForm from "@/components/AddTransactionForm";
 import { redirect } from "next/navigation";
