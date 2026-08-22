@@ -224,6 +224,9 @@ begin
     when 'stripe_checkout' then
       request_limit := 5;
       window_duration := interval '1 hour';
+    when 'categorize' then
+      request_limit := 30;
+      window_duration := interval '1 day';
     else
       raise exception 'Unknown rate-limit scope' using errcode = '22023';
   end case;

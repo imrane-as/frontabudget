@@ -14,6 +14,7 @@ Application SaaS de budget destinée en priorité aux frontaliers France → Lux
 - Répartition graphique des dépenses et simulateur d'économies
 - Météo générale Open-Meteo avec conseil d'économie contextuel
 - Transactions et catégories
+- Catégorisation automatique des dépenses avec badges commerçants et repli IA
 - Budgets mensuels
 - Objectifs d'épargne
 - Profil de mobilité France → Luxembourg
@@ -95,6 +96,7 @@ Dans Supabase > SQL Editor, exécuter dans l'ordre :
 4. `supabase/migrations/0004_financial_health.sql`
 5. `supabase/migrations/0005_repair_smart_budget_schema.sql`
 6. `supabase/migrations/0006_security_hardening.sql`
+7. `supabase/migrations/0007_ai_categorization.sql`
 
 La migration 0001 active RLS sur toutes les tables.
 
@@ -202,9 +204,11 @@ OPENAI_API_KEY=
 OPENAI_MODEL=gpt-5.6-luna
 ```
 
-L'application n'envoie à l'IA que des agrégats (totaux, catégories et budgets),
-jamais les libellés détaillés des transactions. L'appel est manuel et limité à
-3 analyses par utilisateur et par jour.
+Le coach n'envoie à l'IA que des agrégats (totaux, catégories et budgets). Pour
+la catégorisation, les commerçants connus sont reconnus localement. Un libellé
+inconnu peut être envoyé seul à l'IA, sans montant, date, identité ni budget. Ce
+repli est limité à 30 libellés par utilisateur et par jour. L'analyse du coach
+reste limitée à 3 demandes par utilisateur et par jour.
 
 ## 10. Déploiement Vercel
 
