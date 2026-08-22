@@ -1,13 +1,17 @@
 import { endOfMonth, format, startOfMonth, subMonths } from "date-fns";
 import { fr } from "date-fns/locale";
+import { ArrowDownRight, ArrowUpRight, Gauge, PiggyBank, Wallet } from "lucide-react";
 import BudgetAlerts from "@/components/BudgetAlerts";
 import DashboardChart from "@/components/DashboardChart";
+import FinancialHealthCard from "@/components/FinancialHealthCard";
 import MetricCard from "@/components/MetricCard";
+import SavingsSimulator from "@/components/SavingsSimulator";
 import SmartCoach from "@/components/SmartCoach";
+import SpendingDonut from "@/components/SpendingDonut";
 import WeatherCard from "@/components/WeatherCard";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
-import { buildBudgetSnapshot, buildLocalInsights } from "@/lib/smart-budget";
+import { buildBudgetSnapshot, buildLocalInsights, calculateFinancialHealth } from "@/lib/smart-budget";
 import { getWeather } from "@/lib/weather";
 
 export default async function DashboardPage() {
@@ -19,46 +23,47 @@ export default async function DashboardPage() {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("full_name,weather_city,budget_alert_threshold")
+    .select("full_name,weather_city,budget_alert_threshold,monthly_savings_target")
     .eq("id", user.id)
     .maybeSingle();
 
   const alertThreshold = Number(profile?.budget_alert_threshold) || 80;
-  const [transactionsResult, budgetsResult, goalsResult, weather] =
-    await Promise.all([
-      supabase
-        .from("transactions")
-        .select("amount,type,transaction_date,category_id,categories(name)")
-        .eq("user_id", user.id)
-        .gte("transaction_date", historyStart)
-        .lte("transaction_date", monthEnd),
-      supabase
-        .from("budgets")
-        .select("id,planned_amount,category_id,categories(name)")
-        .eq("user_id", user.id)
-        .eq("month", now.getMonth() + 1)
-        .eq("year", now.getFullYear()),
-      supabase
-        .from("goals")
-        .select("id,name,current_amount,target_amount")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(3),
-      getWeather(profile?.weather_city || "Metz")
-    ]);
+  const monthlySavingsTarget = Number(profile?.monthly_savings_target) || 300;
+  const [transactionsResult, budgetsResult, goalsResult, weather] = await Promise.all([
+    supabase
+      .from("transactions")
+      .select("amount,type,transaction_date,category_id,categories(name)")
+      .eq("user_id", user.id)
+      .gte("transaction_date", historyStart)
+      .lte("transaction_date", monthEnd),
+    supabase
+      .from("budgets")
+      .select("id,planned_amount,category_id,categories(name)")
+      .eq("user_id", user.id)
+      .eq("month", now.getMonth() + 1)
+      .eq("year", now.getFullYear()),
+    supabase
+      .from("goals")
+      .select("id,name,current_amount,target_amount")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    getWeather(profile?.weather_city || "Metz")
+  ]);
 
   const allTransactions = transactionsResult.data || [];
   const currentTransactions = allTransactions.filter(
     (transaction) =>
-      transaction.transaction_date >= monthStart &&
-      transaction.transaction_date <= monthEnd
+      transaction.transaction_date >= monthStart && transaction.transaction_date <= monthEnd
   );
   const snapshot = buildBudgetSnapshot({
     transactions: currentTransactions,
     budgets: budgetsResult.data || [],
     now,
-    alertThreshold
+    alertThreshold,
+    monthlySavingsTarget
   });
+  const health = calculateFinancialHealth(snapshot);
 
   const chartData = [];
   for (let i = 5; i >= 0; i--) {
@@ -66,19 +71,12 @@ export default async function DashboardPage() {
     const start = format(startOfMonth(date), "yyyy-MM-dd");
     const end = format(endOfMonth(date), "yyyy-MM-dd");
     const monthTransactions = allTransactions.filter(
-      (transaction) =>
-        transaction.transaction_date >= start &&
-        transaction.transaction_date <= end
+      (transaction) => transaction.transaction_date >= start && transaction.transaction_date <= end
     );
-
     chartData.push({
       name: format(date, "MMM", { locale: fr }),
-      revenus: monthTransactions
-        .filter((transaction) => transaction.type === "income")
-        .reduce((sum, transaction) => sum + Number(transaction.amount), 0),
-      depenses: monthTransactions
-        .filter((transaction) => transaction.type === "expense")
-        .reduce((sum, transaction) => sum + Number(transaction.amount), 0)
+      revenus: monthTransactions.filter((transaction) => transaction.type === "income").reduce((sum, transaction) => sum + Number(transaction.amount), 0),
+      depenses: monthTransactions.filter((transaction) => transaction.type === "expense").reduce((sum, transaction) => sum + Number(transaction.amount), 0)
     });
   }
 
@@ -86,37 +84,46 @@ export default async function DashboardPage() {
   const firstName = profile?.full_name?.trim().split(/\s+/)[0];
 
   return (
-    <div>
+    <div className="dashboard-page">
       <div className="dashboard-head">
         <div className="page-head">
-          <p className="muted">{format(now, "MMMM yyyy", { locale: fr })}</p>
-          <h1>{firstName ? `Bonjour ${firstName} 👋` : "Mon dashboard"}</h1>
-          <p className="muted">Voici l’essentiel pour décider sans ouvrir un tableur.</p>
+          <p className="muted">{format(now, "EEEE d MMMM", { locale: fr })}</p>
+          <h1>{firstName ? `Bonjour ${firstName}` : "Mon dashboard"}<span className="wave">👋</span></h1>
+          <p className="muted">Ton argent, expliqué clairement en un seul regard.</p>
         </div>
         <div className="month-pill">Jour {snapshot.dayOfMonth} sur {snapshot.daysInMonth}</div>
       </div>
 
+      <section className="finance-hero section">
+        <div className="finance-hero-main">
+          <span className="hero-kicker"><Wallet size={15} /> Budget disponible</span>
+          <p>Tu peux encore dépenser</p>
+          <strong>{euro(snapshot.safeToSpend)}</strong>
+          <span className="hero-explanation">après avoir protégé {euro(snapshot.monthlySavingsTarget)} d’épargne</span>
+          <div className="safe-spend-grid">
+            <div><span>Par jour</span><strong>{euro(snapshot.safeToSpendDaily)}</strong><small>{snapshot.daysRemaining} jours restants</small></div>
+            <div><span>Par semaine</span><strong>{euro(snapshot.safeToSpendWeekly)}</strong><small>rythme conseillé</small></div>
+            <div><span>Projection du mois</span><strong>{euro(snapshot.projectedExpenses)}</strong><small>si le rythme continue</small></div>
+          </div>
+        </div>
+        <FinancialHealthCard health={health} />
+      </section>
+
       <BudgetAlerts budgets={snapshot.budgets} />
 
-      <section className="grid grid-4 section">
-        <MetricCard label="Revenus" value={euro(snapshot.income)} detail="ce mois-ci" />
-        <MetricCard
-          label="Dépenses"
-          value={euro(snapshot.expenses)}
-          detail={`${euro(snapshot.dailySpend)} / jour`}
-          tone="negative"
-        />
-        <MetricCard
-          label="Disponible"
-          value={euro(snapshot.remaining)}
-          detail={`projection dépenses ${euro(snapshot.projectedExpenses)}`}
-          tone={snapshot.remaining >= 0 ? "positive" : "negative"}
-        />
-        <MetricCard
-          label="Taux d’épargne"
-          value={`${snapshot.savingRate.toFixed(1)} %`}
-          detail="après dépenses enregistrées"
-        />
+      <section className="grid grid-4 section metric-grid">
+        <MetricCard label="Revenus" value={euro(snapshot.income)} detail="ce mois-ci" accent="emerald" icon={<ArrowUpRight size={18} />} />
+        <MetricCard label="Dépenses" value={euro(snapshot.expenses)} detail={`${euro(snapshot.dailySpend)} / jour`} tone="negative" accent="rose" icon={<ArrowDownRight size={18} />} />
+        <MetricCard label="Solde actuel" value={euro(snapshot.remaining)} detail="avant épargne protégée" tone={snapshot.remaining >= 0 ? "positive" : "negative"} accent="blue" icon={<Wallet size={18} />} />
+        <MetricCard label="Taux d’épargne" value={`${snapshot.savingRate.toFixed(1)} %`} detail="sur les revenus saisis" accent="violet" icon={<PiggyBank size={18} />} />
+      </section>
+
+      <section className="grid grid-2 section analysis-grid">
+        <div className="card spending-card">
+          <div className="card-title-row"><div><span className="eyebrow">Où part ton argent ?</span><h3>Répartition des dépenses</h3></div><Gauge aria-hidden="true" /></div>
+          <SpendingDonut data={snapshot.categories} />
+        </div>
+        <SavingsSimulator categories={snapshot.categories} />
       </section>
 
       <section className="grid grid-2 section smart-grid">
@@ -124,50 +131,34 @@ export default async function DashboardPage() {
         <WeatherCard weather={weather} />
       </section>
 
-      <section className="grid grid-2 section">
-        <div className="card">
-          <div className="card-title-row">
-            <div>
-              <span className="eyebrow">Tendance</span>
-              <h3>Évolution sur 6 mois</h3>
-            </div>
-          </div>
+      <section className="grid grid-2 section lower-grid">
+        <div className="card history-card">
+          <div className="card-title-row"><div><span className="eyebrow">Tendance</span><h3>Évolution sur 6 mois</h3></div></div>
           <p className="muted">Revenus et dépenses enregistrés</p>
           <DashboardChart data={chartData} />
         </div>
 
-        <div className="card">
+        <div className="card goals-card">
           <span className="eyebrow">Progression</span>
           <h3>Objectifs d’épargne</h3>
           <p className="muted">Tes principaux objectifs</p>
-
           {goals.length ? (
-            <div className="grid">
+            <div className="grid goal-list">
               {goals.map((goal) => {
                 const currentAmount = Number(goal.current_amount);
                 const targetAmount = Number(goal.target_amount);
-                const progress =
-                  targetAmount > 0
-                    ? Math.min(100, (currentAmount / targetAmount) * 100)
-                    : 0;
-
+                const progress = targetAmount > 0 ? Math.min(100, (currentAmount / targetAmount) * 100) : 0;
                 return (
-                  <div key={goal.id}>
-                    <div className="split-row">
-                      <strong>{goal.name}</strong>
-                      <span className="muted">
-                        {euro(currentAmount)} / {euro(targetAmount)}
-                      </span>
-                    </div>
-                    <div className="progress" style={{ marginTop: 9 }}>
-                      <div style={{ width: `${progress}%` }} />
-                    </div>
+                  <div className="goal-line" key={goal.id}>
+                    <div className="split-row"><strong>{goal.name}</strong><span className="goal-percent">{progress.toFixed(0)} %</span></div>
+                    <div className="progress"><div style={{ width: `${progress}%` }} /></div>
+                    <small>{euro(currentAmount)} économisés sur {euro(targetAmount)}</small>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <p className="muted">Ajoute ton premier objectif pour suivre ta progression.</p>
+            <div className="empty-goal"><span>🎯</span><p>Ajoute ton premier objectif pour visualiser ta progression.</p></div>
           )}
         </div>
       </section>

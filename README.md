@@ -10,8 +10,9 @@ Application SaaS de budget destinée en priorité aux frontaliers France → Lux
 - Dashboard mensuel
 - Coach budget intelligent avec analyse locale et IA à la demande
 - Prévision de fin de mois et détection des dépassements
+- Score de santé financière et montant disponible par jour
+- Répartition graphique des dépenses et simulateur d'économies
 - Météo générale Open-Meteo avec conseil d'économie contextuel
-- Alertes WhatsApp de dépassement et résumé hebdomadaire
 - Transactions et catégories
 - Budgets mensuels
 - Objectifs d'épargne
@@ -91,6 +92,7 @@ Dans Supabase > SQL Editor, exécuter dans l'ordre :
 1. `supabase/migrations/0001_initial.sql`
 2. `supabase/migrations/0002_recurring_processor.sql`
 3. `supabase/migrations/0003_smart_budget.sql`
+4. `supabase/migrations/0004_financial_health.sql`
 
 La migration 0001 active RLS sur toutes les tables.
 
@@ -198,35 +200,7 @@ L'application n'envoie à l'IA que des agrégats (totaux, catégories et budgets
 jamais les libellés détaillés des transactions. L'appel est manuel et limité à
 3 analyses par utilisateur et par jour.
 
-## 10. Alertes WhatsApp
-
-Créer une application Meta avec WhatsApp Cloud API, puis renseigner :
-
-```env
-WHATSAPP_GRAPH_API_VERSION=v23.0
-WHATSAPP_PHONE_NUMBER_ID=
-WHATSAPP_ACCESS_TOKEN=
-WHATSAPP_TEMPLATE_LANGUAGE=fr
-WHATSAPP_TEMPLATE_BUDGET_ALERT=frontabudget_budget_alert
-WHATSAPP_TEMPLATE_WEEKLY_SUMMARY=frontabudget_weekly_summary
-CRON_SECRET=
-```
-
-Créer et faire approuver deux modèles WhatsApp avec ces corps :
-
-```text
-frontabudget_budget_alert
-Alerte FrontaBudget : vous avez utilisé {{1}} % du budget {{2}} ({{3}} € sur {{4}} €).
-
-frontabudget_weekly_summary
-Résumé FrontaBudget : dépenses {{1}} €, revenus {{2}} €, disponible {{3}} €. Conseil : {{4}}
-```
-
-Le fichier `vercel.json` exécute `/api/cron/budget-alerts` chaque jour à 07:00 UTC.
-Le moteur envoie une seule alerte par seuil et par budget, puis un résumé chaque
-lundi si l'utilisateur l'a activé.
-
-## 11. Déploiement Vercel
+## 10. Déploiement Vercel
 
 Créer un dépôt GitHub puis :
 
@@ -256,7 +230,7 @@ ou votre vrai domaine.
 
 Redéployer après changement de variable.
 
-## 12. Avant ouverture au public
+## 11. Avant ouverture au public
 
 À faire avant de demander de l'argent à de vrais utilisateurs :
 
@@ -275,7 +249,7 @@ Redéployer après changement de variable.
 - Vérification des règles fiscales/sociales frontalières avec sources officielles
 - Ne jamais présenter un calcul fiscal comme un conseil fiscal personnalisé
 
-## 13. Roadmap recommandée
+## 12. Roadmap recommandée
 
 ### Phase 1
 - Tester inscription/login
@@ -320,7 +294,4 @@ SUPABASE_SERVICE_ROLE_KEY
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
 OPENAI_API_KEY
-CRON_SECRET
-WHATSAPP_ACCESS_TOKEN
-WHATSAPP_PHONE_NUMBER_ID
 ```

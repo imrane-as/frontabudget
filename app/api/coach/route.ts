@@ -53,7 +53,7 @@ export async function POST() {
       .eq("year", now.getFullYear()),
     supabase
       .from("profiles")
-      .select("budget_alert_threshold")
+      .select("budget_alert_threshold,monthly_savings_target")
       .eq("id", user.id)
       .maybeSingle()
   ]);
@@ -62,7 +62,8 @@ export async function POST() {
     transactions: transactionsResult.data || [],
     budgets: budgetsResult.data || [],
     now,
-    alertThreshold: Number(profileResult.data?.budget_alert_threshold) || 80
+    alertThreshold: Number(profileResult.data?.budget_alert_threshold) || 80,
+    monthlySavingsTarget: Number(profileResult.data?.monthly_savings_target) || 300
   });
   const localTips = buildLocalInsights(snapshot);
 
@@ -99,6 +100,8 @@ export async function POST() {
     remaining: Math.round(snapshot.remaining),
     projectedExpenses: Math.round(snapshot.projectedExpenses),
     savingRate: Math.round(snapshot.savingRate),
+    protectedSavings: Math.round(snapshot.monthlySavingsTarget),
+    safeToSpendDaily: Math.round(snapshot.safeToSpendDaily),
     topCategories: snapshot.categories.slice(0, 5),
     budgets: snapshot.budgets.slice(0, 8).map((budget) => ({
       category: budget.categoryName,

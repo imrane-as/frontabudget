@@ -1,9 +1,7 @@
 alter table public.profiles
   add column if not exists weather_city text not null default 'Metz',
   add column if not exists budget_alert_threshold integer not null default 80,
-  add column if not exists whatsapp_phone text,
-  add column if not exists whatsapp_enabled boolean not null default false,
-  add column if not exists weekly_summary_enabled boolean not null default true;
+  add column if not exists monthly_savings_target numeric(12,2) not null default 300;
 
 create table if not exists public.ai_daily_usage (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -13,28 +11,10 @@ create table if not exists public.ai_daily_usage (
   primary key (user_id, usage_date)
 );
 
-create table if not exists public.notification_deliveries (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references auth.users(id) on delete cascade,
-  event_key text not null,
-  channel text not null default 'whatsapp',
-  provider_message_id text,
-  status text not null default 'sent',
-  created_at timestamptz not null default now(),
-  unique (user_id, event_key, channel)
-);
-
-create index if not exists idx_notification_deliveries_user_date
-  on public.notification_deliveries(user_id, created_at desc);
-
 alter table public.ai_daily_usage enable row level security;
-alter table public.notification_deliveries enable row level security;
 
 create policy "ai_daily_usage_all_own" on public.ai_daily_usage
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
-
-create policy "notification_deliveries_select_own" on public.notification_deliveries
-  for select using (auth.uid() = user_id);
 
 create or replace function public.consume_ai_quota(
   p_user_id uuid,
