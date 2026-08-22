@@ -12,6 +12,7 @@
 
 ## Sécurité
 - [ ] Migration `0006_security_hardening.sql` appliquée sans erreur
+- [ ] Migration `0007_ai_categorization.sql` appliquée sans erreur
 - [ ] RLS activé sur chaque table publique
 - [ ] Test croisé avec deux comptes
 - [ ] Aucun secret dans le bundle client
@@ -63,7 +64,7 @@
 ## Ordre d'un déploiement sécurisé
 
 1. Créer un projet Supabase réservé à la production.
-2. Exécuter les migrations `0001` à `0006` dans l'ordre.
+2. Exécuter les migrations `0001` à `0007` dans l'ordre.
 3. Relancer **Security Advisor** et corriger toute alerte critique.
 4. Configurer Auth, les URL autorisées et le CAPTCHA.
 5. Ajouter les variables Vercel séparément pour Preview et Production.
