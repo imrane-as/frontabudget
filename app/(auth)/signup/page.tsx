@@ -31,7 +31,9 @@ export default function SignupPage() {
     });
 
     if (error) {
-      setError(error.message);
+      setError(
+        "Inscription impossible. Vérifie les informations ou réessaie plus tard."
+      );
       setLoading(false);
       return;
     }
@@ -54,6 +56,8 @@ export default function SignupPage() {
             Nom
             <input
               required
+              autoComplete="name"
+              maxLength={100}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -63,6 +67,8 @@ export default function SignupPage() {
             Email
             <input
               type="email"
+              autoComplete="email"
+              maxLength={254}
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -73,7 +79,8 @@ export default function SignupPage() {
             Mot de passe
             <input
               type="password"
-              minLength={8}
+              autoComplete="new-password"
+              minLength={12}
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}

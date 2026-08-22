@@ -37,8 +37,8 @@ export function ForgotPasswordForm({
       });
       if (error) throw error;
       setSuccess(true);
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+    } catch {
+      setError("Impossible d’envoyer le lien pour le moment. Réessaie plus tard.");
     } finally {
       setIsLoading(false);
     }
@@ -73,9 +73,11 @@ export function ForgotPasswordForm({
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
+                <Input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  maxLength={254}
                     placeholder="m@example.com"
                     required
                     value={email}

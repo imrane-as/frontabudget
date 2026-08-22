@@ -42,12 +42,14 @@ export async function updateSession(request: NextRequest) {
   ];
 
   const isProtected = protectedPrefixes.some((prefix) =>
-    request.nextUrl.pathname.startsWith(prefix)
+    request.nextUrl.pathname === prefix ||
+    request.nextUrl.pathname.startsWith(`${prefix}/`)
   );
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 
@@ -58,6 +60,7 @@ export async function updateSession(request: NextRequest) {
   ) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

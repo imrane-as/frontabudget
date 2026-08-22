@@ -1,5 +1,7 @@
 import { endOfMonth, format, startOfMonth } from "date-fns";
 import { NextResponse } from "next/server";
+import { consumeRateLimit } from "@/lib/rate-limit";
+import { isSameOriginRequest } from "@/lib/security";
 import { buildBudgetSnapshot, buildLocalInsights } from "@/lib/smart-budget";
 import { createClient } from "@/lib/supabase/server";
 
@@ -9,6 +11,8 @@ type OpenAIResponse = {
     content?: Array<{ type?: string; text?: string }>;
   }>;
 };
+
+const noStoreHeaders = { "Cache-Control": "no-store" };
 
 function extractTips(payload: OpenAIResponse) {
   const text =
@@ -25,13 +29,45 @@ function extractTips(payload: OpenAIResponse) {
     .slice(0, 3);
 }
 
-export async function POST() {
+export async function POST(request: Request) {
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json(
+      { error: "Origine de la requête refusée." },
+      { status: 403, headers: noStoreHeaders }
+    );
+  }
+
   const supabase = await createClient();
   const { data: authData } = await supabase.auth.getUser();
   const user = authData.user;
 
   if (!user) {
-    return NextResponse.json({ error: "Connexion requise." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Connexion requise." },
+      { status: 401, headers: noStoreHeaders }
+    );
+  }
+
+  const rateLimit = await consumeRateLimit(supabase, "coach");
+
+  if (!rateLimit.configured) {
+    return NextResponse.json(
+      { error: "Protection anti-abus indisponible." },
+      { status: 503, headers: noStoreHeaders }
+    );
+  }
+
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Trop de demandes. Réessaie dans quelques minutes." },
+      {
+        status: 429,
+        headers: {
+          ...noStoreHeaders,
+          "Retry-After": String(rateLimit.retryAfter)
+        }
+      }
+    );
   }
 
   const now = new Date();
@@ -68,11 +104,14 @@ export async function POST() {
   const localTips = buildLocalInsights(snapshot);
 
   if (!process.env.OPENAI_API_KEY) {
-    return NextResponse.json({
-      tips: localTips,
-      source: "local",
-      notice: "Ajoute OPENAI_API_KEY pour activer l’analyse IA."
-    });
+    return NextResponse.json(
+      {
+        tips: localTips,
+        source: "local",
+        notice: "Ajoute OPENAI_API_KEY pour activer l’analyse IA."
+      },
+      { headers: noStoreHeaders }
+    );
   }
 
   const { data: quotaAllowed, error: quotaError } = await supabase.rpc(
@@ -80,14 +119,28 @@ export async function POST() {
     { p_user_id: user.id, p_daily_limit: 3 }
   );
 
-  if (!quotaError && quotaAllowed === false) {
+  if (quotaError) {
+    return NextResponse.json(
+      {
+        error: "Quota IA temporairement indisponible.",
+        tips: localTips,
+        source: "local"
+      },
+      { status: 503, headers: noStoreHeaders }
+    );
+  }
+
+  if (quotaAllowed === false) {
     return NextResponse.json(
       {
         error: "Limite de 3 analyses IA par jour atteinte.",
         tips: localTips,
         source: "local"
       },
-      { status: 429 }
+      {
+        status: 429,
+        headers: { ...noStoreHeaders, "Retry-After": "86400" }
+      }
     );
   }
 
@@ -127,21 +180,31 @@ export async function POST() {
         input: JSON.stringify(aggregate),
         max_output_tokens: 360,
         store: false
-      })
+      }),
+      signal: AbortSignal.timeout(12_000)
     });
 
     if (!response.ok) {
-      return NextResponse.json({ tips: localTips, source: "local" });
+      return NextResponse.json(
+        { tips: localTips, source: "local" },
+        { headers: noStoreHeaders }
+      );
     }
 
     const payload = (await response.json()) as OpenAIResponse;
     const tips = extractTips(payload);
 
-    return NextResponse.json({
-      tips: tips.length === 3 ? tips : localTips,
-      source: tips.length === 3 ? "ai" : "local"
-    });
+    return NextResponse.json(
+      {
+        tips: tips.length === 3 ? tips : localTips,
+        source: tips.length === 3 ? "ai" : "local"
+      },
+      { headers: noStoreHeaders }
+    );
   } catch {
-    return NextResponse.json({ tips: localTips, source: "local" });
+    return NextResponse.json(
+      { tips: localTips, source: "local" },
+      { headers: noStoreHeaders }
+    );
   }
 }

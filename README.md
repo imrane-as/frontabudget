@@ -94,6 +94,7 @@ Dans Supabase > SQL Editor, exécuter dans l'ordre :
 3. `supabase/migrations/0003_smart_budget.sql`
 4. `supabase/migrations/0004_financial_health.sql`
 5. `supabase/migrations/0005_repair_smart_budget_schema.sql`
+6. `supabase/migrations/0006_security_hardening.sql`
 
 La migration 0001 active RLS sur toutes les tables.
 
