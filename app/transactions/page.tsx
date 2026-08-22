@@ -1,4 +1,4 @@
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 import AddTransactionForm from "@/components/AddTransactionForm";
 import { redirect } from "next/navigation";
 
@@ -36,7 +36,7 @@ export default async function TransactionsPage() {
 
           <div className="space-y-3">
 
-            {transactions?.map((transaction) => (
+            {transactions?.map((transaction: any) => (
 
               <div
                 key={transaction.id}
