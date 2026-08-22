@@ -1,109 +1,272 @@
-<a href="https://demo-nextjs-with-supabase.vercel.app/">
-  <img alt="Next.js and Supabase Starter Kit - the fastest way to build apps with Next.js and Supabase" src="https://demo-nextjs-with-supabase.vercel.app/opengraph-image.png">
-  <h1 align="center">Next.js and Supabase Starter Kit</h1>
-</a>
+# FrontaBudget
 
-<p align="center">
- The fastest way to build apps with Next.js and Supabase
-</p>
+Application SaaS de budget destinée en priorité aux frontaliers France → Luxembourg.
 
-<p align="center">
-  <a href="#features"><strong>Features</strong></a> ·
-  <a href="#demo"><strong>Demo</strong></a> ·
-  <a href="#deploy-to-vercel"><strong>Deploy to Vercel</strong></a> ·
-  <a href="#clone-and-run-locally"><strong>Clone and run locally</strong></a> ·
-  <a href="#feedback-and-issues"><strong>Feedback and issues</strong></a>
-  <a href="#more-supabase-examples"><strong>More Examples</strong></a>
-</p>
-<br/>
+## Fonctionnalités incluses
 
-## Features
+- Authentification Supabase avec email + mot de passe
+- Confirmation email et callback PKCE
+- Onboarding initial
+- Dashboard mensuel
+- Transactions et catégories
+- Budgets mensuels
+- Objectifs d'épargne
+- Profil de mobilité France → Luxembourg
+- Suivi des jours Luxembourg / télétravail / congé / maladie
+- Row Level Security sur toutes les données utilisateur
+- Base Stripe pour abonnements Premium
+- UI responsive desktop/mobile
+- Migrations SQL versionnées
 
-- Works across the entire [Next.js](https://nextjs.org) stack
-  - App Router
-  - Pages Router
-  - Proxy
-  - Client
-  - Server
-  - It just works!
-- supabase-ssr. A package to configure Supabase Auth to use cookies
-- Password-based authentication block installed via the [Supabase UI Library](https://supabase.com/ui/docs/nextjs/password-based-auth)
-- Styling with [Tailwind CSS](https://tailwindcss.com)
-- Components with [shadcn/ui](https://ui.shadcn.com/)
-- Optional deployment with [Supabase Vercel Integration and Vercel deploy](#deploy-your-own)
-  - Environment variables automatically assigned to Vercel project
+## Stack
 
-## Demo
+- Next.js 16
+- React 19
+- TypeScript
+- Supabase Auth + PostgreSQL + RLS
+- Stripe Billing
+- Recharts
+- Vercel pour l'hébergement
 
-You can view a fully working demo at [demo-nextjs-with-supabase.vercel.app](https://demo-nextjs-with-supabase.vercel.app/).
+---
 
-## Deploy to Vercel
+## 1. Prérequis
 
-Vercel deployment will guide you through creating a Supabase account and project.
+Installer :
 
-After installation of the Supabase integration, all relevant environment variables will be assigned to the project so the deployment is fully functioning.
+- Node.js LTS
+- npm
+- Git
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&project-name=nextjs-with-supabase&repository-name=nextjs-with-supabase&demo-title=nextjs-with-supabase&demo-description=This+starter+configures+Supabase+Auth+to+use+cookies%2C+making+the+user%27s+session+available+throughout+the+entire+Next.js+app+-+Client+Components%2C+Server+Components%2C+Route+Handlers%2C+Server+Actions+and+Middleware.&demo-url=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2F&external-id=https%3A%2F%2Fgithub.com%2Fvercel%2Fnext.js%2Ftree%2Fcanary%2Fexamples%2Fwith-supabase&demo-image=https%3A%2F%2Fdemo-nextjs-with-supabase.vercel.app%2Fopengraph-image.png)
+Vérifier :
 
-The above will also clone the Starter kit to your GitHub, you can clone that locally and develop locally.
+```bash
+node -v
+npm -v
+git --version
+```
 
-If you wish to just develop locally and not deploy to Vercel, [follow the steps below](#clone-and-run-locally).
+## 2. Installer le projet
 
-## Clone and run locally
+```bash
+npm install
+```
 
-1. You'll first need a Supabase project which can be made [via the Supabase dashboard](https://database.new)
+Dupliquer :
 
-2. Create a Next.js app using the Supabase Starter template npx command
+```bash
+cp .env.example .env.local
+```
 
-   ```bash
-   npx create-next-app --example with-supabase with-supabase-app
-   ```
+Sous Windows PowerShell :
 
-   ```bash
-   yarn create next-app --example with-supabase with-supabase-app
-   ```
+```powershell
+Copy-Item .env.example .env.local
+```
 
-   ```bash
-   pnpm create next-app --example with-supabase with-supabase-app
-   ```
+## 3. Créer Supabase
 
-3. Use `cd` to change into the app's directory
+Créer un projet sur Supabase.
 
-   ```bash
-   cd with-supabase-app
-   ```
+Dans Project Settings / Connect, récupérer :
 
-4. Rename `.env.example` to `.env.local` and update the following:
+- Project URL
+- Publishable key
 
-  ```env
-  NEXT_PUBLIC_SUPABASE_URL=[INSERT SUPABASE PROJECT URL]
-  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=[INSERT SUPABASE PROJECT API PUBLISHABLE OR ANON KEY]
-  ```
-  > [!NOTE]
-  > This example uses `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, which refers to Supabase's new **publishable** key format.
-  > Both legacy **anon** keys and new **publishable** keys can be used with this variable name during the transition period. Supabase's dashboard may show `NEXT_PUBLIC_SUPABASE_ANON_KEY`; its value can be used in this example.
-  > See the [full announcement](https://github.com/orgs/supabase/discussions/29260) for more information.
+Renseigner :
 
-  Both `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` can be found in [your Supabase project's API settings](https://supabase.com/dashboard/project/_?showConnect=true)
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+```
 
-5. You can now run the Next.js local development server:
+## 4. Créer la base
 
-   ```bash
-   npm run dev
-   ```
+Dans Supabase > SQL Editor, exécuter dans l'ordre :
 
-   The starter kit should now be running on [localhost:3000](http://localhost:3000/).
+1. `supabase/migrations/0001_initial.sql`
+2. `supabase/migrations/0002_recurring_processor.sql`
 
-6. This template comes with the default shadcn/ui style initialized. If you instead want other ui.shadcn styles, delete `components.json` and [re-install shadcn/ui](https://ui.shadcn.com/docs/installation/next)
+La migration 0001 active RLS sur toutes les tables.
 
-> Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
+## 5. Configurer Auth
 
-## Feedback and issues
+Dans Supabase > Authentication > URL Configuration :
 
-Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
+Local :
 
-## More Supabase examples
+```text
+Site URL:
+http://localhost:3000
 
-- [Next.js Subscription Payments Starter](https://github.com/vercel/nextjs-subscription-payments)
-- [Cookie-based Auth and the Next.js 13 App Router (free course)](https://youtube.com/playlist?list=PL5S4mPUpp4OtMhpnp93EFSo42iQ40XjbF)
-- [Supabase Auth and the Next.js App Router](https://github.com/supabase/supabase/tree/master/examples/auth/nextjs)
+Redirect URLs:
+http://localhost:3000/auth/callback
+```
+
+Pour la production, ajouter ensuite :
+
+```text
+https://votre-domaine.fr/auth/callback
+```
+
+## 6. Démarrer
+
+```bash
+npm run dev
+```
+
+Ouvrir :
+
+```text
+http://localhost:3000
+```
+
+Créer un compte, confirmer l'email, puis terminer l'onboarding.
+
+## 7. Recurring transactions
+
+La fonction SQL :
+
+```text
+materialize_due_recurring_transactions(user_id)
+```
+
+matérialise les échéances dues.
+
+Pour la V1, elle peut être appelée après connexion ou depuis une route sécurisée.
+
+Pour une vraie production à volume plus important, utiliser un job planifié (Supabase Cron/pg_cron, ou Vercel Cron) avec une stratégie idempotente.
+
+## 8. Stripe
+
+Créer dans Stripe :
+
+- Produit : FrontaBudget Premium
+- Prix mensuel
+- Prix annuel
+
+Renseigner :
+
+```env
+STRIPE_SECRET_KEY=
+STRIPE_WEBHOOK_SECRET=
+STRIPE_PREMIUM_MONTHLY_PRICE_ID=
+STRIPE_PREMIUM_YEARLY_PRICE_ID=
+```
+
+Le webhook Stripe utilise aussi une clé serveur Supabase :
+
+```env
+SUPABASE_SERVICE_ROLE_KEY=
+```
+
+IMPORTANT : cette clé ne doit jamais commencer par `NEXT_PUBLIC_` et ne doit jamais être envoyée au navigateur.
+
+Créer le webhook Stripe :
+
+```text
+POST https://votre-domaine.fr/api/stripe/webhook
+```
+
+Événements nécessaires :
+
+```text
+customer.subscription.created
+customer.subscription.updated
+customer.subscription.deleted
+```
+
+## 9. Déploiement Vercel
+
+Créer un dépôt GitHub puis :
+
+```bash
+git init
+git add .
+git commit -m "Initial FrontaBudget production foundation"
+git branch -M main
+git remote add origin <URL_DU_REPO>
+git push -u origin main
+```
+
+Dans Vercel :
+
+1. Add New > Project
+2. Importer le dépôt
+3. Ajouter toutes les variables `.env.local`
+4. Déployer
+
+Mettre ensuite :
+
+```env
+NEXT_PUBLIC_APP_URL=https://votre-domaine.vercel.app
+```
+
+ou votre vrai domaine.
+
+Redéployer après changement de variable.
+
+## 10. Avant ouverture au public
+
+À faire avant de demander de l'argent à de vrais utilisateurs :
+
+- Acheter/configurer un domaine
+- Politique de confidentialité
+- CGU/CGV
+- Mentions légales
+- Gestion du consentement si analytics/cookies non nécessaires
+- Export/suppression des données
+- Sauvegardes et procédure de restauration
+- Logs d'erreurs
+- Monitoring
+- Rate limiting des API sensibles
+- Tests de sécurité
+- Environnements staging et production séparés
+- Vérification des règles fiscales/sociales frontalières avec sources officielles
+- Ne jamais présenter un calcul fiscal comme un conseil fiscal personnalisé
+
+## 11. Roadmap recommandée
+
+### Phase 1
+- Tester inscription/login
+- Tester RLS avec deux comptes différents
+- Ajouter/modifier/supprimer transactions
+- Améliorer onboarding
+
+### Phase 2
+- Charges récurrentes automatiques
+- Exports CSV/PDF
+- Import CSV
+- Catégories personnalisées
+- Contributions aux objectifs
+
+### Phase 3
+- Premium Stripe complet
+- Customer Portal Stripe
+- Entitlements Premium côté serveur
+- Emails transactionnels
+
+### Phase 4
+- Analyse financière par IA
+- Prévisions
+- Open Banking si le produit est validé
+
+## Sécurité
+
+Ne commitez jamais `.env.local`.
+
+Variables publiques :
+
+```text
+NEXT_PUBLIC_SUPABASE_URL
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+NEXT_PUBLIC_APP_URL
+```
+
+Variables strictement serveur :
+
+```text
+SUPABASE_SERVICE_ROLE_KEY
+STRIPE_SECRET_KEY
+STRIPE_WEBHOOK_SECRET
+```
