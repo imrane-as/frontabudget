@@ -93,8 +93,13 @@ Dans Supabase > SQL Editor, exécuter dans l'ordre :
 2. `supabase/migrations/0002_recurring_processor.sql`
 3. `supabase/migrations/0003_smart_budget.sql`
 4. `supabase/migrations/0004_financial_health.sql`
+5. `supabase/migrations/0005_repair_smart_budget_schema.sql`
 
 La migration 0001 active RLS sur toutes les tables.
+
+Si Supabase signale qu'une colonne intelligente est absente du cache de schéma,
+la migration 0005 peut être exécutée seule : elle répare les colonnes manquantes,
+le quota IA et recharge le cache PostgREST sans supprimer les données existantes.
 
 ## 5. Configurer Auth
 
