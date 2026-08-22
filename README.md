@@ -8,6 +8,10 @@ Application SaaS de budget destinée en priorité aux frontaliers France → Lux
 - Confirmation email et callback PKCE
 - Onboarding initial
 - Dashboard mensuel
+- Coach budget intelligent avec analyse locale et IA à la demande
+- Prévision de fin de mois et détection des dépassements
+- Météo générale Open-Meteo avec conseil d'économie contextuel
+- Alertes WhatsApp de dépassement et résumé hebdomadaire
 - Transactions et catégories
 - Budgets mensuels
 - Objectifs d'épargne
@@ -86,6 +90,7 @@ Dans Supabase > SQL Editor, exécuter dans l'ordre :
 
 1. `supabase/migrations/0001_initial.sql`
 2. `supabase/migrations/0002_recurring_processor.sql`
+3. `supabase/migrations/0003_smart_budget.sql`
 
 La migration 0001 active RLS sur toutes les tables.
 
@@ -176,7 +181,52 @@ customer.subscription.updated
 customer.subscription.deleted
 ```
 
-## 9. Déploiement Vercel
+## 9. Assistant intelligent et météo
+
+L'analyse locale, les prévisions, les alertes dans l'application et la météo
+fonctionnent sans clé OpenAI. La météo utilise Open-Meteo et met les réponses en
+cache afin de limiter les appels.
+
+Pour activer le bouton « Affiner avec l'IA », ajouter :
+
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-5.6-luna
+```
+
+L'application n'envoie à l'IA que des agrégats (totaux, catégories et budgets),
+jamais les libellés détaillés des transactions. L'appel est manuel et limité à
+3 analyses par utilisateur et par jour.
+
+## 10. Alertes WhatsApp
+
+Créer une application Meta avec WhatsApp Cloud API, puis renseigner :
+
+```env
+WHATSAPP_GRAPH_API_VERSION=v23.0
+WHATSAPP_PHONE_NUMBER_ID=
+WHATSAPP_ACCESS_TOKEN=
+WHATSAPP_TEMPLATE_LANGUAGE=fr
+WHATSAPP_TEMPLATE_BUDGET_ALERT=frontabudget_budget_alert
+WHATSAPP_TEMPLATE_WEEKLY_SUMMARY=frontabudget_weekly_summary
+CRON_SECRET=
+```
+
+Créer et faire approuver deux modèles WhatsApp avec ces corps :
+
+```text
+frontabudget_budget_alert
+Alerte FrontaBudget : vous avez utilisé {{1}} % du budget {{2}} ({{3}} € sur {{4}} €).
+
+frontabudget_weekly_summary
+Résumé FrontaBudget : dépenses {{1}} €, revenus {{2}} €, disponible {{3}} €. Conseil : {{4}}
+```
+
+Le fichier `vercel.json` exécute `/api/cron/budget-alerts` chaque jour à 07:00 UTC.
+Le moteur envoie une seule alerte par seuil et par budget, puis un résumé chaque
+lundi si l'utilisateur l'a activé.
+
+## 11. Déploiement Vercel
 
 Créer un dépôt GitHub puis :
 
@@ -206,7 +256,7 @@ ou votre vrai domaine.
 
 Redéployer après changement de variable.
 
-## 10. Avant ouverture au public
+## 12. Avant ouverture au public
 
 À faire avant de demander de l'argent à de vrais utilisateurs :
 
@@ -225,7 +275,7 @@ Redéployer après changement de variable.
 - Vérification des règles fiscales/sociales frontalières avec sources officielles
 - Ne jamais présenter un calcul fiscal comme un conseil fiscal personnalisé
 
-## 11. Roadmap recommandée
+## 13. Roadmap recommandée
 
 ### Phase 1
 - Tester inscription/login
@@ -247,9 +297,9 @@ Redéployer après changement de variable.
 - Emails transactionnels
 
 ### Phase 4
-- Analyse financière par IA
-- Prévisions
 - Open Banking si le produit est validé
+- Notifications email de secours
+- Tests d'évaluation des conseils IA
 
 ## Sécurité
 
@@ -269,4 +319,8 @@ Variables strictement serveur :
 SUPABASE_SERVICE_ROLE_KEY
 STRIPE_SECRET_KEY
 STRIPE_WEBHOOK_SECRET
+OPENAI_API_KEY
+CRON_SECRET
+WHATSAPP_ACCESS_TOKEN
+WHATSAPP_PHONE_NUMBER_ID
 ```

@@ -5,11 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
 export default function OnboardingPage() {
-  const supabase = createClient();
   const router = useRouter();
 
   const [residence, setResidence] = useState("France");
   const [workCountry, setWorkCountry] = useState("Luxembourg");
+  const [weatherCity, setWeatherCity] = useState("Metz");
   const [salary, setSalary] = useState("3250");
   const [goal, setGoal] = useState("Comprendre mes dépenses");
   const [loading, setLoading] = useState(false);
@@ -17,6 +17,7 @@ export default function OnboardingPage() {
   async function submit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
+    const supabase = createClient();
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -29,6 +30,7 @@ export default function OnboardingPage() {
       .update({
         residence_country: residence,
         work_country: workCountry,
+        weather_city: weatherCity.trim() || "Metz",
         primary_goal: goal,
         onboarding_completed: true
       })
@@ -74,6 +76,16 @@ export default function OnboardingPage() {
             <select value={workCountry} onChange={(e) => setWorkCountry(e.target.value)}>
               <option>Luxembourg</option>
             </select>
+          </label>
+
+          <label>
+            Ville pour la météo générale
+            <input
+              value={weatherCity}
+              onChange={(e) => setWeatherCity(e.target.value)}
+              placeholder="Metz"
+              maxLength={80}
+            />
           </label>
 
           <label>
