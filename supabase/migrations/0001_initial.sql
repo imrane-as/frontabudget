@@ -190,6 +190,7 @@ begin
     (new.id, 'Téléphone', 'expense', '📱'),
     (new.id, 'Assurances', 'expense', '🛡️'),
     (new.id, 'Abonnements', 'expense', '📺'),
+    (new.id, 'Crédit', 'expense', '🏦'),
     (new.id, 'Sport', 'expense', '🏋️'),
     (new.id, 'Shopping', 'expense', '🛍️'),
     (new.id, 'Voyage', 'expense', '✈️'),

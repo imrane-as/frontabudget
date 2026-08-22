@@ -16,13 +16,29 @@ function formatTransactionDate(value: string) {
   }).format(new Date(`${value}T00:00:00Z`));
 }
 
+type TransactionRow = {
+  id: string;
+  name: string;
+  amount: number | string;
+  type: "income" | "expense";
+  transaction_date: string;
+  merchant_name: string | null;
+  merchant_domain: string | null;
+  categories:
+    | { name: string; icon: string | null }
+    | Array<{ name: string; icon: string | null }>
+    | null;
+};
+
 export default async function TransactionsPage() {
   const { supabase, user } = await requireUser();
 
-  const [transactionsResult, categoriesResult] = await Promise.all([
+  const [richTransactionsResult, categoriesResult] = await Promise.all([
     supabase
       .from("transactions")
-      .select("id,name,amount,type,transaction_date,categories(name,icon)")
+      .select(
+        "id,name,amount,type,transaction_date,merchant_name,merchant_domain,categories(name,icon)"
+      )
       .eq("user_id", user.id)
       .order("transaction_date", { ascending: false })
       .limit(100),
@@ -33,7 +49,24 @@ export default async function TransactionsPage() {
       .order("name")
   ]);
 
-  const transactions = transactionsResult.data || [];
+  let transactions = (richTransactionsResult.data || []) as unknown as TransactionRow[];
+  let transactionsError = richTransactionsResult.error;
+
+  if (richTransactionsResult.error) {
+    const fallbackResult = await supabase
+      .from("transactions")
+      .select("id,name,amount,type,transaction_date,categories(name,icon)")
+      .eq("user_id", user.id)
+      .order("transaction_date", { ascending: false })
+      .limit(100);
+
+    transactions = (fallbackResult.data || []).map((row) => ({
+      ...row,
+      merchant_name: null,
+      merchant_domain: null
+    })) as unknown as TransactionRow[];
+    transactionsError = fallbackResult.error;
+  }
 
   return (
     <div>
@@ -46,7 +79,7 @@ export default async function TransactionsPage() {
         </p>
       </div>
 
-      {(transactionsResult.error || categoriesResult.error) && (
+      {(transactionsError || categoriesResult.error) && (
         <div className="error" style={{ marginBottom: 18 }}>
           Impossible de charger toutes les transactions. Recharge la page ou
           reconnecte-toi.
@@ -88,8 +121,9 @@ export default async function TransactionsPage() {
                     : row.categories;
                   const categoryName = relation?.name || "Autre";
                   const merchant = getMerchantPresentation(
-                    row.name,
-                    categoryName
+                    row.merchant_name || row.name,
+                    categoryName,
+                    row.merchant_domain
                   );
 
                   return (
@@ -125,7 +159,7 @@ export default async function TransactionsPage() {
               </tbody>
             </table>
 
-            {!transactions.length && !transactionsResult.error && (
+            {!transactions.length && !transactionsError && (
               <div className="empty-transactions">
                 <span aria-hidden="true">✦</span>
                 <strong>Ton historique est prêt</strong>
