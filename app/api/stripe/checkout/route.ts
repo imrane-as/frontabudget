@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { stripe } from "@/lib/stripe";
+import { getStripe } from "@/lib/stripe";
 import { requireUser } from "@/lib/auth";
 
 const schema = z.object({
@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       { status: 503 }
     );
   }
+  const stripe = getStripe();
 
   const { supabase, user } = await requireUser();
   const parsed = schema.safeParse(await request.json());
@@ -43,6 +44,7 @@ export async function POST(request: Request) {
   let customerId = existing?.stripe_customer_id ?? null;
 
   if (!customerId) {
+    const stripe = getStripe();
     const customer = await stripe.customers.create({
       email: user.email,
       metadata: { supabase_user_id: user.id }
