@@ -3,6 +3,7 @@ import { CalendarDays, WalletCards } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
 import BudgetForm from "@/components/BudgetForm";
+import BudgetLinesEditor from "@/components/BudgetLinesEditor";
 import PageIntro from "@/components/PageIntro";
 import { buildBudgetSnapshot } from "@/lib/smart-budget";
 
@@ -71,6 +72,14 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
     alertThreshold: Number(profileResult.data?.budget_alert_threshold) || 80
   });
 
+  const editableBudgets = (budgetsResult.data || []).map((budget) => ({
+    id: budget.id,
+    plannedAmount: Number(budget.planned_amount),
+    categoryName: (Array.isArray(budget.categories)
+      ? budget.categories[0]?.name
+      : budget.categories?.name) || "Autre"
+  }));
+
   return (
     <div className="page-shell budgets-page">
       <PageIntro
@@ -131,6 +140,8 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
           ) : (
             <div className="friendly-empty"><span>🪄</span><strong>Prêt à organiser ton mois</strong><p>Crée un premier plafond pour activer les alertes de dépassement.</p></div>
           )}
+
+          <BudgetLinesEditor budgets={editableBudgets} month={month} year={year} />
         </div>
       </section>
     </div>

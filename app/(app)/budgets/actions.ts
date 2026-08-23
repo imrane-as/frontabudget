@@ -15,6 +15,10 @@ export type SaveBudgetResult =
   | { ok: true; message: string }
   | { ok: false; message: string };
 
+export type BudgetLineActionResult =
+  | { ok: true; message: string }
+  | { ok: false; message: string };
+
 export async function saveBudget(input: unknown): Promise<SaveBudgetResult> {
   const parsed = budgetSchema.safeParse(input);
 
@@ -59,5 +63,100 @@ export async function saveBudget(input: unknown): Promise<SaveBudgetResult> {
   return {
     ok: true,
     message: `Budget ${category.name} enregistré pour ${parsed.data.month}/${parsed.data.year}.`
+  };
+}
+
+const budgetLineUpdateSchema = z.object({
+  budgetId: z.string().uuid(),
+  amount: z.number().finite().min(0).max(1_000_000_000)
+});
+
+const budgetLineDeleteSchema = z.object({
+  budgetId: z.string().uuid()
+});
+
+export async function updateBudgetLine(
+  input: unknown
+): Promise<BudgetLineActionResult> {
+  const parsed = budgetLineUpdateSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Les informations de la ligne sont invalides." };
+  }
+
+  const { supabase, user } = await requireUser();
+  const { data: budget, error: budgetError } = await supabase
+    .from("budgets")
+    .select("id,month,year")
+    .eq("id", parsed.data.budgetId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (budgetError || !budget) {
+    return { ok: false, message: "Ligne introuvable." };
+  }
+
+  const { error } = await supabase
+    .from("budgets")
+    .update({ planned_amount: parsed.data.amount })
+    .eq("id", budget.id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return {
+      ok: false,
+      message: "La ligne n’a pas été modifiée. Réessaie dans un instant."
+    };
+  }
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    message: `Budget mis à jour pour ${budget.month}/${budget.year}.`
+  };
+}
+
+export async function deleteBudgetLine(
+  input: unknown
+): Promise<BudgetLineActionResult> {
+  const parsed = budgetLineDeleteSchema.safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, message: "La ligne à supprimer est invalide." };
+  }
+
+  const { supabase, user } = await requireUser();
+  const { data: budget, error: budgetError } = await supabase
+    .from("budgets")
+    .select("id")
+    .eq("id", parsed.data.budgetId)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (budgetError || !budget) {
+    return { ok: false, message: "Ligne introuvable." };
+  }
+
+  const { error } = await supabase
+    .from("budgets")
+    .delete()
+    .eq("id", budget.id)
+    .eq("user_id", user.id);
+
+  if (error) {
+    return {
+      ok: false,
+      message: "La ligne n’a pas été supprimée. Réessaie dans un instant."
+    };
+  }
+
+  revalidatePath("/budgets");
+  revalidatePath("/dashboard");
+
+  return {
+    ok: true,
+    message: "Ligne budget supprimée."
   };
 }
