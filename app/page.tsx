@@ -49,7 +49,7 @@ export default function HomePage() {
           <div className="landing-trust">
             <span><Check size={13} /> Gratuit pour commencer</span>
             <span><LockKeyhole size={13} /> Données isolées par utilisateur</span>
-            <span><Sparkles size={13} /> IA à la demande</span>
+            <span><Sparkles size={13} /> Classement automatique</span>
           </div>
         </div>
 
@@ -90,12 +90,12 @@ export default function HomePage() {
 
       <section className="container landing-proof-row">
         <span>Construit pour le quotidien</span>
-        <div><strong>Budget</strong><strong>Météo</strong><strong>Trajets</strong><strong>Objectifs</strong><strong>IA</strong></div>
+        <div><strong>Budget</strong><strong>Météo</strong><strong>Trajets</strong><strong>Objectifs</strong><strong>Alertes</strong></div>
       </section>
 
       <section className="container feature-section landing-features" id="fonctionnalites">
         <div className="section-intro">
-          <span className="eyebrow">Simple, utile, intelligent</span>
+          <span className="eyebrow">Simple, utile, motivant</span>
           <h2>Tout ce qu’il faut pour avancer avec le sourire.</h2>
           <p className="muted">Des chiffres compréhensibles, des alertes utiles et zéro tableur compliqué.</p>
         </div>
@@ -103,8 +103,8 @@ export default function HomePage() {
           <article className="feature-card feature-mint">
             <span className="feature-icon"><BrainCircuit /></span>
             <h3>Coach budget</h3>
-            <p>Des conseils basés sur tes vrais totaux, avec IA activée uniquement à ta demande.</p>
-            <span className="feature-tag">Intelligent</span>
+            <p>Des conseils basés sur tes vrais totaux, actualisés quand tu en as besoin.</p>
+            <span className="feature-tag">Personnalisé</span>
           </article>
           <article className="feature-card feature-coral">
             <span className="feature-icon"><BellRing /></span>
@@ -131,8 +131,8 @@ export default function HomePage() {
         <div className="security-visual"><ShieldCheck size={44} /><span /><span /></div>
         <div>
           <span className="eyebrow">Conçu avec prudence</span>
-          <h2>Intelligent, mais jamais curieux.</h2>
-          <p>Les calculs essentiels restent locaux. L’IA reçoit uniquement les informations nécessaires et uniquement lorsque tu la demandes.</p>
+          <h2>Utile, mais jamais indiscret.</h2>
+          <p>Les calculs essentiels restent dans l’application. Les fonctions avancées utilisent uniquement les informations strictement nécessaires, lorsque tu les demandes.</p>
           <div className="security-points">
             <span><Check size={14} /> Accès authentifié</span>
             <span><Check size={14} /> Isolation Supabase RLS</span>

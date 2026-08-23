@@ -59,8 +59,8 @@ export default async function SettingsPage() {
       <section className="card section settings-card">
         <div className="card-title-row">
           <div>
-            <span className="eyebrow">Assistant intelligent</span>
-            <h3>Préférences intelligentes</h3>
+            <span className="eyebrow">Assistant budget</span>
+            <h3>Préférences du coach</h3>
           </div>
           <span className="card-heading-icon"><Sparkles size={18} /></span>
         </div>

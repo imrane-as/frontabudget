@@ -70,8 +70,8 @@ export default function AppNav() {
         <div className="sidebar-foot">
           <span className="sidebar-foot-icon" aria-hidden="true">✨</span>
           <div>
-            <strong>Coach intelligent</strong>
-            <small>Analyse locale + IA à la demande</small>
+            <strong>Conseils personnalisés</strong>
+            <small>Analyse de tes dépenses</small>
           </div>
         </div>
         <nav className="nav nav-settings">

@@ -108,7 +108,7 @@ export async function POST(request: Request) {
       {
         tips: localTips,
         source: "local",
-        notice: "Ajoute OPENAI_API_KEY pour activer l’analyse IA."
+        notice: "L’analyse approfondie n’est pas encore configurée."
       },
       { headers: noStoreHeaders }
     );
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
   if (quotaError) {
     return NextResponse.json(
       {
-        error: "Quota IA temporairement indisponible.",
+        error: "Analyse approfondie temporairement indisponible.",
         tips: localTips,
         source: "local"
       },
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
   if (quotaAllowed === false) {
     return NextResponse.json(
       {
-        error: "Limite de 3 analyses IA par jour atteinte.",
+        error: "Limite de 3 analyses approfondies par jour atteinte.",
         tips: localTips,
         source: "local"
       },

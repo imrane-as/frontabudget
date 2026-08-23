@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "FrontaBudget",
-  description: "Budget intelligent, alertes et suivi financier pour frontaliers.",
+  description: "Budget, alertes et suivi financier pour frontaliers.",
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
   )

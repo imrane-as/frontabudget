@@ -20,7 +20,7 @@ export default function AppTopbar({ email }: { email: string }) {
           <Sparkles size={13} />
         </span>
         <div>
-          <strong>Ton espace intelligent</strong>
+          <strong>Ton espace budget</strong>
           <span><LockKeyhole size={11} /> Données privées et synchronisées</span>
         </div>
       </div>
