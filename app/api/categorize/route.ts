@@ -135,7 +135,7 @@ export async function POST(request: Request) {
     return fallbackResponse(
       name,
       type,
-      "Ajoute OPENAI_API_KEY pour reconnaître les libellés inconnus."
+      "La reconnaissance des libellés inconnus n’est pas encore configurée."
     );
   }
 
@@ -145,7 +145,7 @@ export async function POST(request: Request) {
     return fallbackResponse(
       name,
       type,
-      "La protection IA doit être activée avec la migration 0007."
+      "La protection du classement automatique doit être activée avec la migration 0007."
     );
   }
 
@@ -153,7 +153,7 @@ export async function POST(request: Request) {
     return fallbackResponse(
       name,
       type,
-      "Limite IA quotidienne atteinte. Le classement manuel reste disponible."
+      "Limite quotidienne atteinte. Le classement manuel reste disponible."
     );
   }
 

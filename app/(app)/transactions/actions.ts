@@ -34,6 +34,8 @@ const transactionSchema = z.object({
     })
 });
 
+const transactionIdSchema = z.string().uuid();
+
 export type SaveTransactionResult =
   | { ok: true; message: string }
   | { ok: false; message: string };
@@ -45,6 +47,31 @@ function isMissingMerchantSchema(error: { code?: string; message?: string }) {
       error.message || ""
     )
   );
+}
+
+async function categoryBelongsToUser(
+  supabase: Awaited<ReturnType<typeof requireUser>>["supabase"],
+  userId: string,
+  categoryId: string | null,
+  type: "income" | "expense"
+) {
+  if (!categoryId) return true;
+
+  const { data: category, error } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", categoryId)
+    .eq("user_id", userId)
+    .eq("type", type)
+    .maybeSingle();
+
+  return !error && Boolean(category);
+}
+
+function revalidateTransactionViews() {
+  revalidatePath("/transactions");
+  revalidatePath("/dashboard");
+  revalidatePath("/budgets");
 }
 
 export async function saveTransaction(
@@ -59,18 +86,8 @@ export async function saveTransaction(
   const { supabase, user } = await requireUser();
   const { categoryId, type } = parsed.data;
 
-  if (categoryId) {
-    const { data: category, error: categoryError } = await supabase
-      .from("categories")
-      .select("id")
-      .eq("id", categoryId)
-      .eq("user_id", user.id)
-      .eq("type", type)
-      .maybeSingle();
-
-    if (categoryError || !category) {
-      return { ok: false, message: "Cette catégorie ne correspond pas à la transaction." };
-    }
+  if (!(await categoryBelongsToUser(supabase, user.id, categoryId, type))) {
+    return { ok: false, message: "Cette catégorie ne correspond pas à la transaction." };
   }
 
   const baseTransaction = {
@@ -104,9 +121,103 @@ export async function saveTransaction(
     };
   }
 
-  revalidatePath("/transactions");
-  revalidatePath("/dashboard");
-  revalidatePath("/budgets");
+  revalidateTransactionViews();
 
   return { ok: true, message: "Transaction ajoutée et budget actualisé." };
+}
+
+export async function updateTransaction(
+  input: unknown
+): Promise<SaveTransactionResult> {
+  const parsed = transactionSchema.extend({ id: transactionIdSchema }).safeParse(input);
+
+  if (!parsed.success) {
+    return { ok: false, message: "Les informations de la transaction sont invalides." };
+  }
+
+  const { supabase, user } = await requireUser();
+  const { id, categoryId, type } = parsed.data;
+
+  if (!(await categoryBelongsToUser(supabase, user.id, categoryId, type))) {
+    return { ok: false, message: "Cette catégorie ne correspond pas à la transaction." };
+  }
+
+  const baseTransaction = {
+    category_id: categoryId,
+    name: parsed.data.name,
+    amount: parsed.data.amount,
+    type,
+    transaction_date: parsed.data.date
+  };
+
+  let updateResult = await supabase
+    .from("transactions")
+    .update({
+      ...baseTransaction,
+      merchant_name: parsed.data.merchantName,
+      merchant_domain: parsed.data.merchantDomain,
+      categorization_source: parsed.data.categorizationSource,
+      categorization_url: parsed.data.categorizationUrl
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (updateResult.error && isMissingMerchantSchema(updateResult.error)) {
+    updateResult = await supabase
+      .from("transactions")
+      .update(baseTransaction)
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .select("id")
+      .maybeSingle();
+  }
+
+  if (updateResult.error) {
+    return {
+      ok: false,
+      message: "La transaction n’a pas été modifiée. Réessaie dans un instant."
+    };
+  }
+
+  if (!updateResult.data) {
+    return { ok: false, message: "Cette transaction est introuvable ou inaccessible." };
+  }
+
+  revalidateTransactionViews();
+  return { ok: true, message: "Transaction modifiée et budget actualisé." };
+}
+
+export async function deleteTransaction(
+  input: unknown
+): Promise<SaveTransactionResult> {
+  const parsedId = transactionIdSchema.safeParse(input);
+
+  if (!parsedId.success) {
+    return { ok: false, message: "Cette transaction est invalide." };
+  }
+
+  const { supabase, user } = await requireUser();
+  const { data, error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", parsedId.data)
+    .eq("user_id", user.id)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    return {
+      ok: false,
+      message: "La transaction n’a pas été supprimée. Réessaie dans un instant."
+    };
+  }
+
+  if (!data) {
+    return { ok: false, message: "Cette transaction est introuvable ou inaccessible." };
+  }
+
+  revalidateTransactionViews();
+  return { ok: true, message: "Transaction supprimée et budget actualisé." };
 }

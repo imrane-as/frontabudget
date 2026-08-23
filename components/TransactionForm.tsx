@@ -5,10 +5,12 @@ import { LoaderCircle, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   saveTransaction,
+  updateTransaction,
   type SaveTransactionResult
 } from "@/app/(app)/transactions/actions";
 import MerchantMark from "@/components/MerchantMark";
 import type {
+  CategorizationSource,
   CategorizationSuggestion,
   TransactionType
 } from "@/lib/transaction-categorizer";
@@ -22,18 +24,46 @@ type Category = {
 
 type Props = {
   categories: Category[];
+  initialTransaction?: EditableTransaction;
+  onSaved?: () => void;
 };
 
 type SuggestionResponse = CategorizationSuggestion & { notice?: string };
 
-export default function TransactionForm({ categories }: Props) {
+export type EditableTransaction = {
+  id: string;
+  name: string;
+  amount: number;
+  type: TransactionType;
+  categoryId: string | null;
+  date: string;
+  merchantName: string | null;
+  merchantDomain: string | null;
+  categorizationSource: CategorizationSource | null;
+  categorizationUrl: string | null;
+};
+
+export default function TransactionForm({
+  categories,
+  initialTransaction,
+  onSaved
+}: Props) {
   const router = useRouter();
   const manualCategory = useRef(false);
-  const [name, setName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState<TransactionType>("expense");
-  const [categoryId, setCategoryId] = useState("");
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const isEditing = Boolean(initialTransaction);
+  const [name, setName] = useState(initialTransaction?.name || "");
+  const [amount, setAmount] = useState(
+    initialTransaction ? String(initialTransaction.amount) : ""
+  );
+  const [type, setType] = useState<TransactionType>(
+    initialTransaction?.type || "expense"
+  );
+  const [categoryId, setCategoryId] = useState(
+    initialTransaction?.categoryId || ""
+  );
+  const [date, setDate] = useState(
+    initialTransaction?.date || new Date().toISOString().slice(0, 10)
+  );
   const [loading, setLoading] = useState(false);
   const [categorizing, setCategorizing] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestionResponse | null>(null);
@@ -52,8 +82,14 @@ export default function TransactionForm({ categories }: Props) {
 
   useEffect(() => {
     const trimmedName = name.trim();
+    const keepsOriginalIdentity =
+      initialTransaction &&
+      type === initialTransaction.type &&
+      trimmedName.localeCompare(initialTransaction.name.trim(), "fr", {
+        sensitivity: "base"
+      }) === 0;
 
-    if (trimmedName.length < 2) {
+    if (trimmedName.length < 2 || keepsOriginalIdentity) {
       return;
     }
 
@@ -106,7 +142,7 @@ export default function TransactionForm({ categories }: Props) {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [categories, name, type]);
+  }, [categories, initialTransaction, name, type]);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -114,19 +150,37 @@ export default function TransactionForm({ categories }: Props) {
     setResult(null);
 
     let saveResult: SaveTransactionResult;
+    const keepsOriginalMerchant =
+      initialTransaction &&
+      type === initialTransaction.type &&
+      name.trim().localeCompare(initialTransaction.name.trim(), "fr", {
+        sensitivity: "base"
+      }) === 0;
+
+    const transactionInput = {
+      name,
+      amount: Number(amount),
+      type,
+      categoryId: categoryId || null,
+      date,
+      merchantName:
+        suggestion?.displayName ||
+        (keepsOriginalMerchant ? initialTransaction.merchantName : null),
+      merchantDomain:
+        suggestion?.domain ||
+        (keepsOriginalMerchant ? initialTransaction.merchantDomain : null),
+      categorizationSource:
+        suggestion?.source ||
+        (keepsOriginalMerchant ? initialTransaction.categorizationSource : null),
+      categorizationUrl:
+        suggestion?.sourceUrl ||
+        (keepsOriginalMerchant ? initialTransaction.categorizationUrl : null)
+    };
 
     try {
-      saveResult = await saveTransaction({
-        name,
-        amount: Number(amount),
-        type,
-        categoryId: categoryId || null,
-        date,
-        merchantName: suggestion?.displayName || null,
-        merchantDomain: suggestion?.domain || null,
-        categorizationSource: suggestion?.source || null,
-        categorizationUrl: suggestion?.sourceUrl || null
-      });
+      saveResult = initialTransaction
+        ? await updateTransaction({ id: initialTransaction.id, ...transactionInput })
+        : await saveTransaction(transactionInput);
     } catch {
       saveResult = {
         ok: false,
@@ -141,12 +195,18 @@ export default function TransactionForm({ categories }: Props) {
       return;
     }
 
+    router.refresh();
+
+    if (initialTransaction) {
+      onSaved?.();
+      return;
+    }
+
     setName("");
     setAmount("");
     setCategoryId("");
     setSuggestion(null);
     manualCategory.current = false;
-    router.refresh();
   }
 
   return (
@@ -186,11 +246,7 @@ export default function TransactionForm({ categories }: Props) {
           </div>
           <div className="suggestion-meta">
             <span className={`suggestion-source source-${suggestion.source}`}>
-              {suggestion.source === "ai"
-                ? "IA + WEB"
-                : suggestion.source === "local"
-                  ? "Auto"
-                  : "Manuel"}
+              {suggestion.source === "fallback" ? "À confirmer" : "Automatique"}
             </span>
             {suggestion.sourceUrl && (
               <a
@@ -283,12 +339,18 @@ export default function TransactionForm({ categories }: Props) {
       )}
 
       <button className="btn btn-primary" disabled={loading}>
-        {loading ? "Ajout..." : "Ajouter la transaction"}
+        {loading
+          ? isEditing
+            ? "Modification..."
+            : "Ajout..."
+          : isEditing
+            ? "Enregistrer les modifications"
+            : "Ajouter la transaction"}
       </button>
 
       <p className="transaction-privacy">
-        Les marques connues sont immédiates. Pour un nom inconnu, l’IA recherche le
-        domaine officiel avec le seul libellé — jamais le montant, la date ou le budget.
+        Les marques connues apparaissent immédiatement. Pour un nom inconnu, seul le
+        libellé sert à identifier le site officiel — jamais le montant, la date ou le budget.
       </p>
     </form>
   );

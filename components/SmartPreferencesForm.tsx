@@ -49,7 +49,7 @@ export default function SmartPreferencesForm({
     if (updateError) {
       setError(updateError.message);
     } else {
-      setMessage("Tes préférences intelligentes sont enregistrées.");
+      setMessage("Tes préférences sont enregistrées.");
     }
 
     setLoading(false);

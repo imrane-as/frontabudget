@@ -1,6 +1,7 @@
-import { ArrowLeftRight, Sparkles } from "lucide-react";
+import { ArrowLeftRight, BadgeCheck } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
+import TransactionActions from "@/components/TransactionActions";
 import TransactionForm from "@/components/TransactionForm";
 import MerchantMark from "@/components/MerchantMark";
 import PageIntro from "@/components/PageIntro";
@@ -24,8 +25,11 @@ type TransactionRow = {
   amount: number | string;
   type: "income" | "expense";
   transaction_date: string;
+  category_id: string | null;
   merchant_name: string | null;
   merchant_domain: string | null;
+  categorization_source: "local" | "ai" | "fallback" | null;
+  categorization_url: string | null;
   categories:
     | { name: string; icon: string | null }
     | Array<{ name: string; icon: string | null }>
@@ -39,7 +43,7 @@ export default async function TransactionsPage() {
     supabase
       .from("transactions")
       .select(
-        "id,name,amount,type,transaction_date,merchant_name,merchant_domain,categories(name,icon)"
+        "id,name,amount,type,transaction_date,category_id,merchant_name,merchant_domain,categorization_source,categorization_url,categories(name,icon)"
       )
       .eq("user_id", user.id)
       .order("transaction_date", { ascending: false })
@@ -57,7 +61,7 @@ export default async function TransactionsPage() {
   if (richTransactionsResult.error) {
     const fallbackResult = await supabase
       .from("transactions")
-      .select("id,name,amount,type,transaction_date,categories(name,icon)")
+      .select("id,name,amount,type,transaction_date,category_id,categories(name,icon)")
       .eq("user_id", user.id)
       .order("transaction_date", { ascending: false })
       .limit(100);
@@ -65,7 +69,9 @@ export default async function TransactionsPage() {
     transactions = (fallbackResult.data || []).map((row) => ({
       ...row,
       merchant_name: null,
-      merchant_domain: null
+      merchant_domain: null,
+      categorization_source: null,
+      categorization_url: null
     })) as unknown as TransactionRow[];
     transactionsError = fallbackResult.error;
   }
@@ -77,7 +83,7 @@ export default async function TransactionsPage() {
         title="Transactions"
         tone="violet"
         icon={<ArrowLeftRight size={26} />}
-        aside={<span className="page-feature-pill"><Sparkles size={14} /> IA + logos</span>}
+        aside={<span className="page-feature-pill"><BadgeCheck size={14} /> Logos automatiques</span>}
         description={
           <span className="transaction-intro">
             Saisis un commerçant : la catégorie et son identité visuelle apparaissent
@@ -100,7 +106,7 @@ export default async function TransactionsPage() {
               <span className="eyebrow">NOUVELLE OPÉRATION</span>
               <h3>Ajouter une transaction</h3>
             </div>
-            <span className="ai-pill">✦ Classement intelligent</span>
+            <span className="automation-pill">✦ Classement automatique</span>
           </div>
           <TransactionForm categories={categoriesResult.data || []} />
         </div>
@@ -118,7 +124,8 @@ export default async function TransactionsPage() {
                 <tr>
                   <th>Date</th>
                   <th>Commerçant</th>
-                  <th>Montant</th>
+                  <th className="transaction-amount">Montant</th>
+                  <th><span className="sr-only">Actions</span></th>
                 </tr>
               </thead>
               <tbody>
@@ -154,11 +161,28 @@ export default async function TransactionsPage() {
                         </div>
                       </td>
                       <td
-                        className={
+                        className={`transaction-amount ${
                           row.type === "income" ? "amount-income" : "amount-expense"
-                        }
+                        }`}
                       >
                         {row.type === "income" ? "+" : "-"} {euro(Number(row.amount))}
+                      </td>
+                      <td className="transaction-actions-cell">
+                        <TransactionActions
+                          categories={categoriesResult.data || []}
+                          transaction={{
+                            id: row.id,
+                            name: row.name,
+                            amount: Number(row.amount),
+                            type: row.type,
+                            categoryId: row.category_id,
+                            date: row.transaction_date,
+                            merchantName: row.merchant_name,
+                            merchantDomain: row.merchant_domain,
+                            categorizationSource: row.categorization_source,
+                            categorizationUrl: row.categorization_url
+                          }}
+                        />
                       </td>
                     </tr>
                   );

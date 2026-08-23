@@ -129,7 +129,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
               ))}
             </div>
           ) : (
-            <div className="friendly-empty"><span>🪄</span><strong>Prêt à organiser ton mois</strong><p>Crée un premier plafond pour activer les alertes intelligentes.</p></div>
+            <div className="friendly-empty"><span>🪄</span><strong>Prêt à organiser ton mois</strong><p>Crée un premier plafond pour activer les alertes de dépassement.</p></div>
           )}
         </div>
       </section>

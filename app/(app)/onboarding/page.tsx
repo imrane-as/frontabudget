@@ -148,7 +148,7 @@ export default function OnboardingPage() {
         <div className="onboarding-benefit-list">
           <div><span><Wallet size={16} /></span><p><strong>Budget protégé</strong><small>Ton épargne reste visible avant chaque décision.</small></p><Check size={15} /></div>
           <div><span><MapPinned size={16} /></span><p><strong>Vie frontalière</strong><small>Trajets et journées Luxembourg au même endroit.</small></p><Check size={15} /></div>
-          <div><span><Sparkles size={16} /></span><p><strong>Conseils intelligents</strong><small>Des recommandations simples, jamais envahissantes.</small></p><Check size={15} /></div>
+          <div><span><Sparkles size={16} /></span><p><strong>Conseils utiles</strong><small>Des recommandations simples, jamais envahissantes.</small></p><Check size={15} /></div>
         </div>
       </aside>
       </section>

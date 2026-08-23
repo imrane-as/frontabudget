@@ -9,7 +9,7 @@ export default function SmartCoach({ initialTips }: { initialTips: string[] }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  async function refreshWithAi() {
+  async function refreshAdvice() {
     setLoading(true);
     setError(null);
 
@@ -43,7 +43,7 @@ export default function SmartCoach({ initialTips }: { initialTips: string[] }) {
       <div className="card-title-row">
         <div>
           <span className="eyebrow">
-            {source === "ai" ? "Analyse IA" : "Analyse intelligente locale"}
+            {source === "ai" ? "Analyse approfondie" : "Analyse instantanée"}
           </span>
           <h3>Ton coach budget</h3>
         </div>
@@ -61,12 +61,12 @@ export default function SmartCoach({ initialTips }: { initialTips: string[] }) {
 
       {error && <p className="inline-error">{error}</p>}
 
-      <button className="btn btn-compact" onClick={refreshWithAi} disabled={loading}>
+      <button className="btn btn-compact" onClick={refreshAdvice} disabled={loading}>
         <RefreshCw size={15} className={loading ? "spin" : ""} />
-        {loading ? "Analyse..." : "Affiner avec l’IA"}
+        {loading ? "Analyse..." : "Affiner les conseils"}
       </button>
       <p className="microcopy">
-        L’IA est appelée seulement à ta demande afin de limiter le coût et les données envoyées.
+        L’analyse approfondie est lancée seulement à ta demande et utilise uniquement tes totaux.
       </p>
     </div>
   );
