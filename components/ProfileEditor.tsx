@@ -36,9 +36,12 @@ type SupabaseError = {
 
 function profileSaveError(error: SupabaseError) {
   const diagnostic = `${error.message || ""} ${error.details || ""}`.toLowerCase();
+  const missingColumn = error.message?.match(/Could not find the '([^']+)' column/i)?.[1];
 
   if (error.code === "PGRST204" || diagnostic.includes("schema cache")) {
-    return "Supabase n’a pas encore actualisé les nouveaux champs. Applique la migration 0010, puis actualise cette page.";
+    return missingColumn
+      ? `Le champ « ${missingColumn} » manque dans Supabase. Applique la dernière migration de réparation, puis actualise cette page.`
+      : "Supabase n’a pas encore actualisé les champs du profil. Applique la dernière migration de réparation, puis actualise cette page.";
   }
   if (error.code === "42501" || diagnostic.includes("row-level security")) {
     return "La règle de sécurité bloque la mise à jour de ton profil. La migration 0010 répare cette autorisation.";
