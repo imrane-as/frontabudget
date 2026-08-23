@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
 import {
   ArrowLeftRight,
   BarChart3,
@@ -37,11 +38,7 @@ export default function AppNav() {
     <>
       <aside className="sidebar">
         <Link href="/dashboard" className="logo">
-          <span className="logo-mark">F</span>
-          <span className="logo-copy">
-            <span>Fronta<strong>Budget</strong></span>
-            <small>Ton copilote financier</small>
-          </span>
+          <BrandLogo />
         </Link>
         <div className="sidebar-label">Piloter</div>
         <nav className="nav">

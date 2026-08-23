@@ -1,20 +1,28 @@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { CloudSun, Droplets, Wind } from "lucide-react";
+import Link from "next/link";
 import { describeWeather, type WeatherData } from "@/lib/weather";
 
-export default function WeatherCard({ weather }: { weather: WeatherData | null }) {
+export default function WeatherCard({
+  weather,
+  city = "Metz"
+}: {
+  weather: WeatherData | null;
+  city?: string;
+}) {
   if (!weather) {
     return (
       <div className="card weather-card">
         <div className="card-title-row">
           <div>
-            <span className="eyebrow">Météo générale</span>
-            <h3>Météo momentanément indisponible</h3>
+            <span className="eyebrow">Météo générale · {city}</span>
+            <h3>Prévisions momentanément indisponibles</h3>
           </div>
           <CloudSun aria-hidden="true" />
         </div>
-        <p className="muted">Le reste de ton dashboard reste accessible.</p>
+        <p className="muted">Vérifie la ville enregistrée ou réessaie dans quelques minutes.</p>
+        <Link href="/settings" className="weather-settings-link">Vérifier ma ville</Link>
       </div>
     );
   }

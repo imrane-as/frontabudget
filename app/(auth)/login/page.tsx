@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useState } from "react";
+import BrandLogo from "@/components/BrandLogo";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
@@ -37,7 +38,7 @@ export default function LoginPage() {
   return (
     <main className="auth-wrap">
       <div className="card auth-card">
-        <span className="badge">FrontaBudget</span>
+        <Link href="/" className="auth-brand"><BrandLogo /></Link>
         <h1>Connexion</h1>
         <p className="auth-note">Retrouve ton budget et tes objectifs.</p>
 

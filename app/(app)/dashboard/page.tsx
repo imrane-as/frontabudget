@@ -6,7 +6,6 @@ import {
   ArrowRight,
   ArrowUpRight,
   Gauge,
-  PiggyBank,
   Plus,
   Sparkles,
   Target,
@@ -15,15 +14,30 @@ import {
 import BudgetAlerts from "@/components/BudgetAlerts";
 import DashboardChart from "@/components/DashboardChart";
 import FinancialHealthCard from "@/components/FinancialHealthCard";
+import GroceryMarketCard from "@/components/GroceryMarketCard";
+import IncomeIdeasCard from "@/components/IncomeIdeasCard";
 import MetricCard from "@/components/MetricCard";
 import SavingsSimulator from "@/components/SavingsSimulator";
 import SmartCoach from "@/components/SmartCoach";
 import SpendingDonut from "@/components/SpendingDonut";
 import WeatherCard from "@/components/WeatherCard";
 import { requireUser } from "@/lib/auth";
+import { getGroceryMarket } from "@/lib/grocery-market";
 import { euro } from "@/lib/money";
 import { buildBudgetSnapshot, buildLocalInsights, calculateFinancialHealth } from "@/lib/smart-budget";
 import { getWeather } from "@/lib/weather";
+
+type DashboardProfile = {
+  full_name: string | null;
+  weather_city: string | null;
+  budget_alert_threshold: number | null;
+  monthly_savings_target: number | string | null;
+  birth_year?: number | null;
+  household_size?: number | null;
+  employment_status?: "employee" | "self_employed" | "student" | "job_seeker" | "retired" | "other" | null;
+  skills?: string | null;
+  grocery_budget_weekly?: number | string | null;
+};
 
 export default async function DashboardPage() {
   const { supabase, user } = await requireUser();
@@ -32,15 +46,26 @@ export default async function DashboardPage() {
   const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
   const historyStart = format(startOfMonth(subMonths(now, 5)), "yyyy-MM-dd");
 
-  const { data: profile } = await supabase
+  const extendedProfileResult = await supabase
     .from("profiles")
-    .select("full_name,weather_city,budget_alert_threshold,monthly_savings_target")
+    .select("full_name,weather_city,budget_alert_threshold,monthly_savings_target,birth_year,household_size,employment_status,skills,grocery_budget_weekly")
     .eq("id", user.id)
     .maybeSingle();
 
+  let profile = extendedProfileResult.data as DashboardProfile | null;
+  if (extendedProfileResult.error) {
+    const fallbackProfileResult = await supabase
+      .from("profiles")
+      .select("full_name,weather_city,budget_alert_threshold,monthly_savings_target")
+      .eq("id", user.id)
+      .maybeSingle();
+    profile = fallbackProfileResult.data as DashboardProfile | null;
+  }
+
   const alertThreshold = Number(profile?.budget_alert_threshold) || 80;
   const monthlySavingsTarget = Number(profile?.monthly_savings_target) || 300;
-  const [transactionsResult, budgetsResult, goalsResult, weather] = await Promise.all([
+  const city = profile?.weather_city || "Metz";
+  const [transactionsResult, budgetsResult, goalsResult, weather, groceryMarket] = await Promise.all([
     supabase
       .from("transactions")
       .select("amount,type,transaction_date,category_id,categories(name)")
@@ -59,7 +84,8 @@ export default async function DashboardPage() {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(3),
-    getWeather(profile?.weather_city || "Metz")
+    getWeather(city),
+    getGroceryMarket(city)
   ]);
 
   const allTransactions = transactionsResult.data || [];
@@ -75,6 +101,9 @@ export default async function DashboardPage() {
     monthlySavingsTarget
   });
   const health = calculateFinancialHealth(snapshot);
+  const monthlyGrocerySpent = snapshot.categories.find(
+    (category) => category.name.toLocaleLowerCase("fr") === "courses"
+  )?.amount || 0;
 
   const chartData = [];
   for (let i = 5; i >= 0; i--) {
@@ -134,76 +163,105 @@ export default async function DashboardPage() {
         </Link>
       </nav>
 
-      <section className="finance-hero section">
-        <span className="finance-hero-orb finance-hero-orb-one" aria-hidden="true" />
-        <span className="finance-hero-orb finance-hero-orb-two" aria-hidden="true" />
-        <div className="finance-hero-main">
-          <span className="hero-kicker"><Sparkles size={15} /> Budget disponible</span>
-          <p>Tu peux encore dépenser</p>
-          <strong>{euro(snapshot.safeToSpend)}</strong>
-          <span className="hero-explanation">après avoir protégé {euro(snapshot.monthlySavingsTarget)} d’épargne ✨</span>
-          <div className="safe-spend-grid">
-            <div><span>Par jour</span><strong>{euro(snapshot.safeToSpendDaily)}</strong><small>{snapshot.daysRemaining} jours restants</small></div>
-            <div><span>Par semaine</span><strong>{euro(snapshot.safeToSpendWeekly)}</strong><small>rythme conseillé</small></div>
-            <div><span>Projection du mois</span><strong>{euro(snapshot.projectedExpenses)}</strong><small>si le rythme continue</small></div>
+      <section className="dashboard-overview-grid section">
+        <div className="finance-hero">
+          <span className="finance-hero-orb finance-hero-orb-one" aria-hidden="true" />
+          <span className="finance-hero-orb finance-hero-orb-two" aria-hidden="true" />
+          <div className="finance-hero-main">
+            <span className="hero-kicker"><Sparkles size={15} /> Budget disponible</span>
+            <p>Tu peux encore dépenser</p>
+            <strong>{euro(snapshot.safeToSpend)}</strong>
+            <span className="hero-explanation">après avoir protégé {euro(snapshot.monthlySavingsTarget)} d’épargne</span>
+            <div className="safe-spend-grid">
+              <div><span>Par jour</span><strong>{euro(snapshot.safeToSpendDaily)}</strong><small>{snapshot.daysRemaining} jours restants</small></div>
+              <div><span>Par semaine</span><strong>{euro(snapshot.safeToSpendWeekly)}</strong><small>rythme conseillé</small></div>
+              <div><span>Projection</span><strong>{euro(snapshot.projectedExpenses)}</strong><small>fin de mois</small></div>
+            </div>
           </div>
+          <FinancialHealthCard health={health} />
         </div>
-        <FinancialHealthCard health={health} />
+        <WeatherCard weather={weather} city={city} />
       </section>
 
       <BudgetAlerts budgets={snapshot.budgets} />
 
-      <section className="grid grid-4 section metric-grid">
+      <section className="grid grid-3 section metric-grid metric-grid-condensed">
         <MetricCard label="Revenus" value={euro(snapshot.income)} detail="ce mois-ci" accent="emerald" icon={<ArrowUpRight size={18} />} />
         <MetricCard label="Dépenses" value={euro(snapshot.expenses)} detail={`${euro(snapshot.dailySpend)} / jour`} tone="negative" accent="rose" icon={<ArrowDownRight size={18} />} />
         <MetricCard label="Solde actuel" value={euro(snapshot.remaining)} detail="avant épargne protégée" tone={snapshot.remaining >= 0 ? "positive" : "negative"} accent="blue" icon={<Wallet size={18} />} />
-        <MetricCard label="Taux d’épargne" value={`${snapshot.savingRate.toFixed(1)} %`} detail="sur les revenus saisis" accent="violet" icon={<PiggyBank size={18} />} />
       </section>
 
-      <section className="grid grid-2 section analysis-grid">
-        <div className="card spending-card">
-          <div className="card-title-row"><div><span className="eyebrow">Où part ton argent ?</span><h3>Répartition des dépenses</h3></div><span className="card-heading-icon"><Gauge aria-hidden="true" /></span></div>
-          <SpendingDonut data={snapshot.categories} />
-        </div>
-        <SavingsSimulator categories={snapshot.categories} />
+      <div className="dashboard-section-heading section">
+        <div><span className="eyebrow">PERSONNALISÉ POUR TOI</span><h2>Des actions utiles cette semaine</h2></div>
+        <Link href="/settings">Ajuster mon profil <ArrowRight size={14} /></Link>
+      </div>
+      <section className="grid grid-2 personalized-grid">
+        <GroceryMarketCard
+          market={groceryMarket}
+          groceryBudgetWeekly={
+            profile?.grocery_budget_weekly === null || profile?.grocery_budget_weekly === undefined
+              ? null
+              : Number(profile.grocery_budget_weekly)
+          }
+          monthlyGrocerySpent={monthlyGrocerySpent}
+          dayOfMonth={snapshot.dayOfMonth}
+        />
+        <IncomeIdeasCard
+          birthYear={profile?.birth_year || null}
+          employmentStatus={profile?.employment_status || null}
+          skills={profile?.skills || ""}
+        />
       </section>
 
-      <section className="grid grid-2 section smart-grid">
-        <SmartCoach initialTips={buildLocalInsights(snapshot)} />
-        <WeatherCard weather={weather} />
-      </section>
-
-      <section className="grid grid-2 section lower-grid">
-        <div className="card history-card">
-          <div className="card-title-row"><div><span className="eyebrow">Tendance</span><h3>Évolution sur 6 mois</h3></div></div>
-          <p className="muted">Revenus et dépenses enregistrés</p>
-          <DashboardChart data={chartData} />
-        </div>
-
-        <div className="card goals-card">
-          <span className="eyebrow">Progression</span>
-          <h3>Objectifs d’épargne</h3>
-          <p className="muted">Vos principaux objectifs</p>
-          {goals.length ? (
-            <div className="grid goal-list">
-              {goals.map((goal) => {
-                const currentAmount = Number(goal.current_amount);
-                const targetAmount = Number(goal.target_amount);
-                const progress = targetAmount > 0 ? Math.min(100, (currentAmount / targetAmount) * 100) : 0;
-                return (
-                  <div className="goal-line" key={goal.id}>
-                    <div className="split-row"><strong>{goal.name}</strong><span className="goal-percent">{progress.toFixed(0)} %</span></div>
-                    <div className="progress"><div style={{ width: `${progress}%` }} /></div>
-                    <small>{euro(currentAmount)} économisés sur {euro(targetAmount)}</small>
-                  </div>
-                );
-              })}
+      <details className="dashboard-details section">
+        <summary>
+          <span><Gauge size={18} /><span><strong>Analyses détaillées</strong><small>Graphiques, simulateur, conseils et objectifs</small></span></span>
+          <span className="details-action">Afficher</span>
+        </summary>
+        <div className="dashboard-details-content">
+          <section className="grid grid-2 analysis-grid">
+            <div className="card spending-card">
+              <div className="card-title-row"><div><span className="eyebrow">Où part ton argent ?</span><h3>Répartition des dépenses</h3></div><span className="card-heading-icon"><Gauge aria-hidden="true" /></span></div>
+              <SpendingDonut data={snapshot.categories} />
             </div>
-          ) : (
-            <div className="empty-goal"><span>🎯</span><p>Ajoute ton premier objectif pour visualiser ta progression.</p><Link href="/goals" className="btn btn-compact">Créer un objectif</Link></div>
-          )}
+            <SavingsSimulator categories={snapshot.categories} />
+          </section>
+
+          <section className="grid grid-2 smart-grid">
+            <SmartCoach initialTips={buildLocalInsights(snapshot)} />
+
+            <div className="card goals-card">
+              <span className="eyebrow">Progression</span>
+              <h3>Objectifs d’épargne</h3>
+              <p className="muted">Tes principaux objectifs</p>
+              {goals.length ? (
+                <div className="grid goal-list">
+                  {goals.map((goal) => {
+                    const currentAmount = Number(goal.current_amount);
+                    const targetAmount = Number(goal.target_amount);
+                    const progress = targetAmount > 0 ? Math.min(100, (currentAmount / targetAmount) * 100) : 0;
+                    return (
+                      <div className="goal-line" key={goal.id}>
+                        <div className="split-row"><strong>{goal.name}</strong><span className="goal-percent">{progress.toFixed(0)} %</span></div>
+                        <div className="progress"><div style={{ width: `${progress}%` }} /></div>
+                        <small>{euro(currentAmount)} économisés sur {euro(targetAmount)}</small>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="empty-goal"><span>🎯</span><p>Ajoute ton premier objectif pour visualiser ta progression.</p><Link href="/goals" className="btn btn-compact">Créer un objectif</Link></div>
+              )}
+            </div>
+          </section>
+
+          <section className="card history-card">
+            <div className="card-title-row"><div><span className="eyebrow">Tendance</span><h3>Évolution sur 6 mois</h3></div></div>
+            <p className="muted">Revenus et dépenses enregistrés</p>
+            <DashboardChart data={chartData} />
+          </section>
         </div>
-      </section>
+      </details>
     </div>
   );
 }
