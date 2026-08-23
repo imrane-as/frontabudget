@@ -72,13 +72,20 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
     alertThreshold: Number(profileResult.data?.budget_alert_threshold) || 80
   });
 
-  const editableBudgets = (budgetsResult.data || []).map((budget) => ({
-    id: budget.id,
-    plannedAmount: Number(budget.planned_amount),
-    categoryName: (Array.isArray(budget.categories)
-      ? budget.categories[0]?.name
-      : budget.categories?.name) || "Autre"
-  }));
+  const editableBudgets = (budgetsResult.data || []).map((budget) => {
+    const relatedCategory = budget.categories as
+      | { name?: string | null }
+      | { name?: string | null }[]
+      | null;
+
+    return {
+      id: budget.id,
+      plannedAmount: Number(budget.planned_amount),
+      categoryName: (Array.isArray(relatedCategory)
+        ? relatedCategory[0]?.name
+        : relatedCategory?.name) || "Autre"
+    };
+  });
 
   return (
     <div className="page-shell budgets-page">
