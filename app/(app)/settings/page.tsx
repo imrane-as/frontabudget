@@ -2,17 +2,44 @@ import { Settings, ShieldCheck, Sparkles } from "lucide-react";
 import CheckoutButtons from "@/components/CheckoutButtons";
 import LogoutButton from "@/components/LogoutButton";
 import PageIntro from "@/components/PageIntro";
+import ProfileEditor from "@/components/ProfileEditor";
 import SmartPreferencesForm from "@/components/SmartPreferencesForm";
 import { requireUser } from "@/lib/auth";
+
+type ProfileData = {
+  full_name: string | null;
+  residence_country: string | null;
+  work_country: string | null;
+  weather_city: string | null;
+  budget_alert_threshold: number | null;
+  monthly_savings_target: number | string | null;
+  birth_year?: number | null;
+  household_size?: number | null;
+  employment_status?: "employee" | "self_employed" | "student" | "job_seeker" | "retired" | "other" | null;
+  skills?: string | null;
+  grocery_budget_weekly?: number | string | null;
+  avatar_path?: string | null;
+  updated_at?: string | null;
+};
 
 export default async function SettingsPage() {
   const { supabase, user } = await requireUser();
 
-  const { data: profile } = await supabase
+  const extendedProfileResult = await supabase
     .from("profiles")
-    .select("full_name,residence_country,work_country,weather_city,budget_alert_threshold,monthly_savings_target")
+    .select("full_name,residence_country,work_country,weather_city,budget_alert_threshold,monthly_savings_target,birth_year,household_size,employment_status,skills,grocery_budget_weekly,avatar_path,updated_at")
     .eq("id", user.id)
     .single();
+
+  let profile = extendedProfileResult.data as ProfileData | null;
+  if (extendedProfileResult.error) {
+    const fallbackProfileResult = await supabase
+      .from("profiles")
+      .select("full_name,residence_country,work_country,weather_city,budget_alert_threshold,monthly_savings_target,updated_at")
+      .eq("id", user.id)
+      .single();
+    profile = fallbackProfileResult.data as ProfileData | null;
+  }
 
   const { data: subscription } = await supabase
     .from("subscriptions")
@@ -54,6 +81,33 @@ export default async function SettingsPage() {
           </p>
           <CheckoutButtons />
         </div>
+      </section>
+
+      <section className="card section settings-card profile-settings-card">
+        <div className="card-title-row">
+          <div>
+            <span className="eyebrow">Profil personnalisé</span>
+            <h3>Mieux te connaître pour mieux t’aider</h3>
+          </div>
+          <span className="card-heading-icon"><Sparkles size={18} /></span>
+        </div>
+        <p className="muted">
+          Ces informations restent privées et servent à adapter les budgets courses et les suggestions à ta situation.
+        </p>
+        <ProfileEditor
+          initialFullName={profile?.full_name || ""}
+          initialBirthYear={profile?.birth_year || null}
+          initialHouseholdSize={profile?.household_size || 1}
+          initialEmploymentStatus={profile?.employment_status || null}
+          initialSkills={profile?.skills || ""}
+          initialGroceryBudgetWeekly={
+            profile?.grocery_budget_weekly === null || profile?.grocery_budget_weekly === undefined
+              ? null
+              : Number(profile.grocery_budget_weekly)
+          }
+          initialHasAvatar={Boolean(profile?.avatar_path)}
+          profileVersion={profile?.updated_at || null}
+        />
       </section>
 
       <section className="card section settings-card">
