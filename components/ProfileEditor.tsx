@@ -28,6 +28,28 @@ type Props = {
 
 const currentYear = new Date().getFullYear();
 
+type SupabaseError = {
+  code?: string;
+  message?: string;
+  details?: string;
+};
+
+function profileSaveError(error: SupabaseError) {
+  const diagnostic = `${error.message || ""} ${error.details || ""}`.toLowerCase();
+
+  if (error.code === "PGRST204" || diagnostic.includes("schema cache")) {
+    return "Supabase n’a pas encore actualisé les nouveaux champs. Applique la migration 0010, puis actualise cette page.";
+  }
+  if (error.code === "42501" || diagnostic.includes("row-level security")) {
+    return "La règle de sécurité bloque la mise à jour de ton profil. La migration 0010 répare cette autorisation.";
+  }
+  if (error.code === "23514") {
+    return "Une valeur du profil ne respecte pas les limites autorisées. Vérifie les champs puis réessaie.";
+  }
+
+  return `Le profil n’a pas pu être enregistré${error.code ? ` (erreur ${error.code})` : ""}.`;
+}
+
 export default function ProfileEditor({
   initialFullName,
   initialBirthYear,
@@ -107,6 +129,19 @@ export default function ProfileEditor({
       setLoading(false);
       return;
     }
+    if (!Number.isInteger(householdSize) || householdSize < 1 || householdSize > 12) {
+      setError("La taille du foyer doit être comprise entre 1 et 12.");
+      setLoading(false);
+      return;
+    }
+    if (
+      parsedGroceryBudget !== null &&
+      (!Number.isFinite(parsedGroceryBudget) || parsedGroceryBudget < 0 || parsedGroceryBudget > 10000)
+    ) {
+      setError("Le budget courses doit être compris entre 0 et 10 000 €.");
+      setLoading(false);
+      return;
+    }
 
     const supabase = createClient();
     const { data } = await supabase.auth.getUser();
@@ -129,29 +164,38 @@ export default function ProfileEditor({
         });
 
       if (uploadError) {
-        setError("La photo n’a pas pu être enregistrée. Vérifie que la migration 0009 est appliquée.");
+        setError(
+          `La photo n’a pas pu être enregistrée${uploadError.name ? ` (${uploadError.name})` : ""}. Vérifie la migration 0010.`
+        );
         setLoading(false);
         return;
       }
     }
 
-    const { error: updateError } = await supabase
+    const { data: updatedProfile, error: updateError } = await supabase
       .from("profiles")
       .update({
         full_name: fullName.trim(),
         birth_year: parsedBirthYear,
-        household_size: Math.min(12, Math.max(1, householdSize)),
+        household_size: householdSize,
         employment_status: employmentStatus || null,
         skills: skills.trim() || null,
-        grocery_budget_weekly:
-          parsedGroceryBudget === null ? null : Math.max(0, parsedGroceryBudget),
+        grocery_budget_weekly: parsedGroceryBudget,
         ...(avatarFile ? { avatar_path: avatarPath } : {}),
         updated_at: new Date().toISOString()
       })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("id")
+      .maybeSingle();
 
     if (updateError) {
-      setError("Le profil n’a pas pu être enregistré. Applique la migration 0009 puis réessaie.");
+      setError(profileSaveError(updateError));
+      setLoading(false);
+      return;
+    }
+
+    if (!updatedProfile) {
+      setError("Aucun profil n’est associé à ce compte. Applique la migration 0010 pour le recréer.");
       setLoading(false);
       return;
     }
@@ -178,13 +222,17 @@ export default function ProfileEditor({
     }
 
     await supabase.storage.from("avatars").remove([`${user.id}/avatar`]);
-    const { error: updateError } = await supabase
+    const { data: updatedProfile, error: updateError } = await supabase
       .from("profiles")
       .update({ avatar_path: null, updated_at: new Date().toISOString() })
-      .eq("id", user.id);
+      .eq("id", user.id)
+      .select("id")
+      .maybeSingle();
 
     if (updateError) {
-      setError("La photo n’a pas pu être supprimée.");
+      setError(profileSaveError(updateError));
+    } else if (!updatedProfile) {
+      setError("Aucun profil n’est associé à ce compte. Applique la migration 0010 pour le recréer.");
     } else {
       if (previewUrl) URL.revokeObjectURL(previewUrl);
       setPreviewUrl(null);
