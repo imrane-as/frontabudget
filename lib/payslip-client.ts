@@ -43,12 +43,10 @@ export type ProcessedPayslip = {
   salary: number | null;
   period: { month: number; year: number } | null;
   pageCount: number;
+  wasProtected: boolean;
 };
 
-export async function unlockAndAnalyzePayslip(
-  file: File,
-  password: string
-): Promise<ProcessedPayslip> {
+async function validatePdf(file: File) {
   const header = new TextDecoder("ascii").decode(
     new Uint8Array(await file.slice(0, 5).arrayBuffer())
   );
@@ -56,12 +54,68 @@ export async function unlockAndAnalyzePayslip(
   if (header !== "%PDF-") {
     throw new Error("Ce fichier ne semble pas être un PDF valide.");
   }
+}
 
-  const createQpdf = await loadQpdfFactory();
-  const qpdf = await createQpdf({
-    locateFile: () => "/wasm/qpdf.wasm",
-    noInitialRun: true
-  });
+async function analyzePdfBytes(
+  bytes: Uint8Array,
+  blob: Blob,
+  wasProtected: boolean
+): Promise<ProcessedPayslip> {
+  const { extractText, getDocumentProxy } = await import("unpdf");
+  const document = await getDocumentProxy(new Uint8Array(bytes));
+
+  try {
+    const { text } = await extractText(document, { mergePages: true });
+
+    return {
+      blob,
+      salary: detectNetSalary(text),
+      period: detectPayslipPeriod(text),
+      pageCount: document.numPages,
+      wasProtected
+    };
+  } finally {
+    await (document as unknown as { cleanup: () => Promise<unknown> }).cleanup();
+  }
+}
+
+export function isPdfPasswordRequired(error: unknown) {
+  if (!error || typeof error !== "object") return false;
+
+  const candidate = error as { name?: string; message?: string; code?: number };
+  return (
+    candidate.name === "PasswordException" ||
+    candidate.code === 1 ||
+    /password|mot de passe/i.test(candidate.message || "")
+  );
+}
+
+export async function analyzePayslip(file: File): Promise<ProcessedPayslip> {
+  await validatePdf(file);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  return analyzePdfBytes(bytes, file, false);
+}
+
+export async function unlockAndAnalyzePayslip(
+  file: File,
+  password: string
+): Promise<ProcessedPayslip> {
+  await validatePdf(file);
+
+  let qpdf: QpdfRuntime;
+
+  try {
+    const createQpdf = await loadQpdfFactory();
+    qpdf = await createQpdf({
+      locateFile: () => "/wasm/qpdf.wasm",
+      noInitialRun: true
+    });
+  } catch {
+    throw new Error(
+      "Le module d’ouverture sécurisée n’a pas pu démarrer. Actualise la page puis réessaie."
+    );
+  }
   const inputPath = "/payslip-input.pdf";
   const outputPath = "/payslip-unlocked.pdf";
 
@@ -78,21 +132,11 @@ export async function unlockAndAnalyzePayslip(
 
     const output = new Uint8Array(qpdf.FS.readFile(outputPath));
     const unlockedBytes = new Uint8Array(output);
-    const { extractText, getDocumentProxy } = await import("unpdf");
-    const document = await getDocumentProxy(new Uint8Array(unlockedBytes));
-
-    try {
-      const { text } = await extractText(document, { mergePages: true });
-
-      return {
-        blob: new Blob([unlockedBytes.buffer], { type: "application/pdf" }),
-        salary: detectNetSalary(text),
-        period: detectPayslipPeriod(text),
-        pageCount: document.numPages
-      };
-    } finally {
-      await (document as unknown as { cleanup: () => Promise<unknown> }).cleanup();
-    }
+    return analyzePdfBytes(
+      unlockedBytes,
+      new Blob([unlockedBytes.buffer], { type: "application/pdf" }),
+      true
+    );
   } catch {
     throw new Error(
       "Le PDF n’a pas pu être ouvert. Vérifie le mot de passe ou essaie un autre fichier."

@@ -5,6 +5,7 @@ import {
   BadgeCheck,
   FileCheck2,
   FileKey2,
+  FileText,
   LoaderCircle,
   LockKeyhole,
   UploadCloud
@@ -14,6 +15,8 @@ import { createClient } from "@/lib/supabase/client";
 import { MAX_PAYSLIP_SIZE, formatFileSize } from "@/lib/payslip";
 import {
   type ProcessedPayslip,
+  analyzePayslip,
+  isPdfPasswordRequired,
   unlockAndAnalyzePayslip
 } from "@/lib/payslip-client";
 
@@ -38,25 +41,69 @@ export default function PayslipUploader({
   const [salary, setSalary] = useState("");
   const [createTransaction, setCreateTransaction] = useState(true);
   const [processed, setProcessed] = useState<ProcessedPayslip | null>(null);
+  const [requiresPassword, setRequiresPassword] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState<Result>(null);
 
-  function selectFile(nextFile: File | null) {
-    setFile(nextFile);
-    setProcessed(null);
-    setSalary("");
-    setResult(null);
+  function applyAnalysis(analysis: ProcessedPayslip) {
+    setProcessed(analysis);
+    setRequiresPassword(false);
+
+    if (analysis.salary) setSalary(String(analysis.salary));
+    if (analysis.period) {
+      setPeriod(
+        `${analysis.period.year}-${String(analysis.period.month).padStart(2, "0")}`
+      );
+    }
+
+    setResult({
+      ok: true,
+      message: analysis.salary
+        ? `${analysis.wasProtected ? "PDF protégé ouvert" : "PDF lu"} et salaire net détecté. Vérifie les informations avant l’ajout.`
+        : `${analysis.wasProtected ? "PDF protégé ouvert" : "PDF lu"}. Le salaire n’a pas été reconnu : indique-le avant l’ajout.`
+    });
   }
 
-  async function analyze() {
-    if (!file) {
-      setResult({ ok: false, message: "Choisis d’abord ta fiche de paie au format PDF." });
+  async function selectFile(nextFile: File | null) {
+    setFile(nextFile);
+    setProcessed(null);
+    setRequiresPassword(false);
+    setPassword("");
+    setSalary("");
+    setResult(null);
+
+    if (!nextFile) return;
+
+    if (nextFile.size > MAX_PAYSLIP_SIZE) {
+      setResult({ ok: false, message: "Le PDF dépasse la limite de 12 Mo." });
       return;
     }
 
-    if (file.size > MAX_PAYSLIP_SIZE) {
-      setResult({ ok: false, message: "Le PDF dépasse la limite de 12 Mo." });
+    setProcessing(true);
+
+    try {
+      applyAnalysis(await analyzePayslip(nextFile));
+    } catch (error) {
+      if (isPdfPasswordRequired(error)) {
+        setRequiresPassword(true);
+      } else {
+        setResult({
+          ok: false,
+          message:
+            error instanceof Error
+              ? error.message
+              : "Le PDF n’a pas pu être lu."
+        });
+      }
+    } finally {
+      setProcessing(false);
+    }
+  }
+
+  async function unlockProtectedPdf() {
+    if (!file || !password) {
+      setResult({ ok: false, message: "Saisis le mot de passe de ce PDF protégé." });
       return;
     }
 
@@ -65,21 +112,7 @@ export default function PayslipUploader({
 
     try {
       const analysis = await unlockAndAnalyzePayslip(file, password);
-      setProcessed(analysis);
-
-      if (analysis.salary) setSalary(String(analysis.salary));
-      if (analysis.period) {
-        setPeriod(
-          `${analysis.period.year}-${String(analysis.period.month).padStart(2, "0")}`
-        );
-      }
-
-      setResult({
-        ok: true,
-        message: analysis.salary
-          ? "PDF déverrouillé et salaire net détecté. Vérifie les informations avant l’ajout."
-          : "PDF déverrouillé. Le salaire n’a pas été reconnu : indique-le avant l’ajout."
-      });
+      applyAnalysis(analysis);
     } catch (error) {
       setProcessed(null);
       setResult({
@@ -87,7 +120,7 @@ export default function PayslipUploader({
         message:
           error instanceof Error
             ? error.message
-            : "Le PDF n’a pas pu être déverrouillé."
+            : "Le PDF protégé n’a pas pu être ouvert."
       });
     } finally {
       setPassword("");
@@ -99,7 +132,7 @@ export default function PayslipUploader({
     event.preventDefault();
 
     if (!file || !processed) {
-      setResult({ ok: false, message: "Déverrouille et analyse d’abord le PDF." });
+      setResult({ ok: false, message: "Attends la lecture du PDF avant de continuer." });
       return;
     }
 
@@ -173,6 +206,7 @@ export default function PayslipUploader({
     setSaving(false);
     setFile(null);
     setProcessed(null);
+    setRequiresPassword(false);
     setSalary("");
     setEmployer("");
     if (fileInput.current) fileInput.current.value = "";
@@ -189,7 +223,7 @@ export default function PayslipUploader({
     <form className="payslip-upload-form" onSubmit={save}>
       <div className="payslip-flow" aria-label="Étapes d’import">
         <span className={file ? "done" : "active"}><UploadCloud /> 1. PDF</span>
-        <span className={processed ? "done" : file ? "active" : ""}><FileKey2 /> 2. Ouverture</span>
+        <span className={processed ? "done" : file ? "active" : ""}><FileText /> 2. Lecture</span>
         <span className={processed ? "active" : ""}><BadgeCheck /> 3. Validation</span>
       </div>
 
@@ -199,10 +233,10 @@ export default function PayslipUploader({
           type="file"
           accept="application/pdf,.pdf"
           disabled={disabled || processing || saving}
-          onChange={(event) => selectFile(event.target.files?.[0] || null)}
+          onChange={(event) => void selectFile(event.target.files?.[0] || null)}
         />
         <span className="payslip-dropzone-icon" aria-hidden="true">
-          {file ? <FileCheck2 /> : <UploadCloud />}
+          {processing ? <LoaderCircle className="spin" /> : file ? <FileCheck2 /> : <UploadCloud />}
         </span>
         <span>
           <strong>{file ? file.name : "Choisir une fiche de paie"}</strong>
@@ -210,34 +244,57 @@ export default function PayslipUploader({
         </span>
       </label>
 
-      <div className="payslip-unlock-row">
-        <label>
-          Mot de passe du PDF
-          <span className="payslip-password-field">
-            <LockKeyhole aria-hidden="true" />
-            <input
-              type="password"
-              autoComplete="off"
-              placeholder="Laisser vide si le PDF est déjà ouvert"
-              value={password}
-              disabled={!file || processing || saving}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </span>
-        </label>
-        <button
-          type="button"
-          className="btn payslip-unlock-button"
-          onClick={analyze}
-          disabled={!file || disabled || processing || saving}
-        >
-          {processing ? <><LoaderCircle className="spin" /> Ouverture…</> : <><FileKey2 /> Déverrouiller et lire</>}
-        </button>
-      </div>
+      {processing && (
+        <p className="payslip-processing-note" role="status">
+          <LoaderCircle className="spin" /> Lecture automatique du bulletin…
+        </p>
+      )}
 
-      <p className="payslip-security-note">
-        <LockKeyhole /> Le mot de passe reste dans ce navigateur et est effacé juste après l’ouverture.
-      </p>
+      {requiresPassword && (
+        <div className="payslip-protected-box">
+          <div className="payslip-protected-head">
+            <span><LockKeyhole /></span>
+            <div>
+              <strong>PDF protégé détecté</strong>
+              <small>Le mot de passe est nécessaire uniquement pour ce document.</small>
+            </div>
+          </div>
+          <div className="payslip-unlock-row">
+            <label>
+              Mot de passe du PDF
+              <span className="payslip-password-field">
+                <LockKeyhole aria-hidden="true" />
+                <input
+                  type="password"
+                  autoComplete="off"
+                  autoFocus
+                  placeholder="Saisir le mot de passe"
+                  value={password}
+                  disabled={processing || saving}
+                  onChange={(event) => setPassword(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void unlockProtectedPdf();
+                    }
+                  }}
+                />
+              </span>
+            </label>
+            <button
+              type="button"
+              className="btn payslip-unlock-button"
+              onClick={unlockProtectedPdf}
+              disabled={!password || disabled || processing || saving}
+            >
+              {processing ? <><LoaderCircle className="spin" /> Ouverture…</> : <><FileKey2 /> Ouvrir le PDF protégé</>}
+            </button>
+          </div>
+          <p className="payslip-security-note">
+            <LockKeyhole /> Le mot de passe reste dans ce navigateur et est effacé après l’ouverture.
+          </p>
+        </div>
+      )}
 
       {processed && (
         <div className="payslip-review">
@@ -312,4 +369,3 @@ export default function PayslipUploader({
     </form>
   );
 }
-

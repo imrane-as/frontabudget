@@ -43,7 +43,7 @@ export default async function PayslipsPage() {
         tone="blue"
         icon={<FileKey2 size={27} />}
         aside={<span className="page-feature-pill"><ShieldCheck size={14} /> Coffre-fort privé</span>}
-        description="Déverrouille ton bulletin, récupère le salaire net et range chaque mois au même endroit."
+        description="Importe ton bulletin, récupère le salaire net et range chaque mois au même endroit."
       />
 
       <section className="payslip-summary" aria-label="Résumé des fiches de paie">
@@ -71,7 +71,7 @@ export default async function PayslipsPage() {
             <span className="card-heading-icon"><FileKey2 /></span>
           </div>
           <p className="payslip-card-copy">
-            Les PDF protégés sont ouverts sur ton appareil. Le mot de passe n’est jamais conservé.
+            Les PDF normaux sont lus directement. Si un document est protégé, le mot de passe sera demandé à ce moment-là uniquement.
           </p>
 
           {error && (
@@ -129,4 +129,3 @@ export default async function PayslipsPage() {
     </div>
   );
 }
-

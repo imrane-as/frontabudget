@@ -5064,6 +5064,16 @@ html.light .success { border-color: #82bfa4; color: #075c3b; background: #dceee5
 .payslip-save svg { width: 16px; height: 16px; }
 .payslip-security-note { margin: -3px 0 0; display: flex; align-items: center; gap: 6px; color: #83a1bc; font-size: 10px; line-height: 1.5; }
 .payslip-security-note svg { width: 13px; height: 13px; flex: 0 0 auto; color: #63e0ad; }
+.payslip-processing-note { margin: 0; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(104, 184, 255, .18); border-radius: 12px; color: #acd7ff; background: rgba(104, 184, 255, .06); font-size: 11px; }
+.payslip-processing-note svg { width: 16px; height: 16px; }
+.payslip-protected-box { padding: 14px; display: grid; gap: 13px; border: 1px solid rgba(255, 209, 102, .24); border-radius: 15px; background: rgba(255, 209, 102, .055); }
+.payslip-protected-head { display: flex; align-items: center; gap: 10px; }
+.payslip-protected-head > span { width: 35px; height: 35px; display: grid; flex: 0 0 auto; place-items: center; border-radius: 11px; color: #ffd77e; background: rgba(255, 209, 102, .12); }
+.payslip-protected-head > span svg { width: 17px; height: 17px; }
+.payslip-protected-head > div { display: grid; gap: 2px; }
+.payslip-protected-head strong { color: #fff2cf; font-size: 12px; }
+.payslip-protected-head small { color: #a9b7c7; font-size: 9px; line-height: 1.45; }
+.payslip-protected-box .payslip-security-note { margin: 0; }
 
 .payslip-review { padding: 14px; display: grid; gap: 13px; border: 1px solid rgba(59, 214, 154, .18); border-radius: 15px; background: rgba(59, 214, 154, .045); }
 .payslip-review-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -5116,6 +5126,11 @@ html.light .payslip-review > label,
 html.light .payslip-fields label { color: #344f69; }
 html.light .payslip-unlock-button { color: #22496f; background: rgba(41, 105, 176, .09); }
 html.light .payslip-security-note { color: #536b83; }
+html.light .payslip-processing-note { border-color: rgba(41, 105, 176, .2); color: #245f99; background: rgba(41, 105, 176, .065); }
+html.light .payslip-protected-box { border-color: rgba(159, 109, 15, .25); background: rgba(255, 209, 102, .13); }
+html.light .payslip-protected-head > span { color: #8b5c05; background: rgba(159, 109, 15, .12); }
+html.light .payslip-protected-head strong { color: #60420b; }
+html.light .payslip-protected-head small { color: #5b6f83; }
 html.light .payslip-review { border-color: rgba(8, 122, 75, .2); background: rgba(8, 122, 75, .05); }
 html.light .payslip-income-option { border-color: rgba(41, 105, 176, .17); background: rgba(41, 105, 176, .055); }
 html.light .payslip-count { border-color: rgba(41, 105, 176, .22); color: #245f99; background: rgba(41, 105, 176, .08); }
