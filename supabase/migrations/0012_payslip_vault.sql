@@ -96,7 +96,7 @@ create policy "payslips_files_insert_own" on storage.objects
   with check (
     bucket_id = 'payslips'
     and split_part(name, '/', 1) = (select auth.uid())::text
-    and name ~ ('^' || (select auth.uid())::text || '/[0-9a-f-]{36}\\.pdf$')
+    and name ~ ('^' || (select auth.uid())::text || '/[0-9a-f-]{36}[.]pdf$')
   );
 
 create policy "payslips_files_update_own" on storage.objects

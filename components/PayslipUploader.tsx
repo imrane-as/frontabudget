@@ -166,11 +166,14 @@ export default function PayslipUploader({
 
     if (uploadError) {
       setSaving(false);
+      const uploadMessage = uploadError.message.toLowerCase();
       setResult({
         ok: false,
-        message: /bucket|not found|row-level security/i.test(uploadError.message)
-          ? "Le coffre-fort n’est pas prêt. Applique la migration 0012 puis réessaie."
-          : "Le PDF n’a pas pu être envoyé dans ton coffre-fort."
+        message: /row-level security|policy/.test(uploadMessage)
+          ? "L’envoi sécurisé doit être actualisé. Applique la migration 0013 puis réessaie."
+          : /bucket|not found/.test(uploadMessage)
+            ? "Le coffre-fort n’est pas prêt. Applique la migration 0012 puis réessaie."
+            : "Le PDF n’a pas pu être envoyé dans ton coffre-fort."
       });
       return;
     }
