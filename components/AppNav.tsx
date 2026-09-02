@@ -8,6 +8,7 @@ import {
   BarChart3,
   BriefcaseBusiness,
   Car,
+  FileKey2,
   Goal,
   Settings,
   WalletCards
@@ -16,6 +17,7 @@ import {
 const primaryItems = [
   { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
   { href: "/transactions", label: "Transactions", icon: ArrowLeftRight },
+  { href: "/payslips", label: "Fiches de paie", icon: FileKey2 },
   { href: "/budgets", label: "Budgets", icon: WalletCards },
   { href: "/goals", label: "Objectifs", icon: Goal }
 ];
@@ -29,7 +31,9 @@ const settingsItem = [
   { href: "/settings", label: "Paramètres", icon: Settings }
 ];
 
-const mobileItems = [...primaryItems, dailyItems[0]];
+const mobileItems = primaryItems.map((item) =>
+  item.href === "/payslips" ? { ...item, label: "Paies" } : item
+);
 
 export default function AppNav() {
   const pathname = usePathname();

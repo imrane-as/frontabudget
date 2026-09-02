@@ -6,3 +6,6 @@ node_modules
 .vercel
 .DS_Store
 npm-debug.log*
+*.tsbuildinfo
+public/wasm/qpdf.js
+public/wasm/qpdf.wasm
