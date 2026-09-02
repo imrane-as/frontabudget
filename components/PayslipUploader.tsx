@@ -51,6 +51,7 @@ export default function PayslipUploader({
     setRequiresPassword(false);
 
     if (analysis.salary) setSalary(String(analysis.salary));
+    if (analysis.employerName) setEmployer(analysis.employerName);
     if (analysis.period) {
       setPeriod(
         `${analysis.period.year}-${String(analysis.period.month).padStart(2, "0")}`
