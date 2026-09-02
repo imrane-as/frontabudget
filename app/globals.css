@@ -5166,3 +5166,203 @@ html.light .payslip-icon-button { border-color: #bcc8d4; color: #405a74; backgro
   .payslip-item { grid-template-columns: auto minmax(0, 1fr); }
   .payslip-actions { grid-column: 1 / -1; grid-row: auto; justify-content: flex-end; padding-top: 7px; border-top: 1px solid rgba(188, 205, 224, .14); }
 }
+
+/* Monthly dashboard navigation and private reports */
+.dashboard-period-bar {
+  margin-bottom: 13px;
+  padding: 12px 13px;
+  display: grid;
+  grid-template-columns: minmax(180px, auto) minmax(310px, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border: 1px solid rgba(188, 205, 224, .22);
+  border-radius: 20px;
+  background:
+    linear-gradient(100deg, rgba(59, 214, 154, .08), transparent 34%),
+    rgba(24, 40, 61, .88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+}
+
+.dashboard-period-copy,
+.dashboard-period-controls {
+  display: flex;
+  align-items: center;
+}
+
+.dashboard-period-copy {
+  gap: 10px;
+}
+
+.dashboard-period-copy > span {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 12px;
+  color: #79e6b9;
+  background: rgba(59, 214, 154, .12);
+}
+
+.dashboard-period-copy > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.dashboard-period-copy small {
+  color: var(--muted);
+  font-size: 9px;
+}
+
+.dashboard-period-copy strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dashboard-period-controls {
+  justify-content: center;
+  gap: 7px;
+}
+
+.period-arrow {
+  width: 39px;
+  height: 39px;
+  padding: 0;
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgba(188, 205, 224, .22);
+  border-radius: 12px;
+  color: #d7e2ed;
+  background: rgba(8, 18, 31, .48);
+  transition: border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease;
+}
+
+.period-arrow:hover:not(:disabled) {
+  border-color: rgba(59, 214, 154, .42);
+  color: #79e6b9;
+  background: rgba(59, 214, 154, .1);
+  transform: translateY(-1px);
+}
+
+.period-arrow:disabled {
+  cursor: not-allowed;
+  opacity: .35;
+}
+
+.period-month-input input {
+  width: 155px;
+  min-height: 39px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 750;
+  color-scheme: dark;
+}
+
+.period-current {
+  min-height: 39px;
+  padding: 7px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(104, 184, 255, .22);
+  border-radius: 12px;
+  color: #add7fb;
+  background: rgba(104, 184, 255, .08);
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.dashboard-report-download {
+  min-height: 41px;
+  padding-inline: 14px;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+html.light .dashboard-period-bar {
+  border-color: #bcc8d4;
+  background:
+    linear-gradient(100deg, rgba(8, 122, 75, .08), transparent 34%),
+    #e4eaf0;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .8);
+}
+
+html.light .dashboard-period-copy > span {
+  color: #087047;
+  background: rgba(8, 122, 75, .1);
+}
+
+html.light .period-arrow {
+  border-color: #bbc8d5;
+  color: #304b66;
+  background: #f2f5f8;
+}
+
+html.light .period-month-input input {
+  color-scheme: light;
+}
+
+html.light .period-current {
+  border-color: #b7c9da;
+  color: #285f8a;
+  background: #e8f0f7;
+}
+
+@media (max-width: 1120px) {
+  .dashboard-period-bar {
+    grid-template-columns: auto minmax(280px, 1fr);
+  }
+
+  .dashboard-report-download {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 760px) {
+  .dashboard-period-bar {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+
+  .dashboard-period-controls {
+    justify-content: flex-start;
+  }
+
+  .period-month-input {
+    flex: 1;
+  }
+
+  .period-month-input input {
+    width: 100%;
+  }
+
+  .dashboard-report-download {
+    grid-column: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .dashboard-period-bar {
+    padding: 11px;
+    border-radius: 17px;
+  }
+
+  .period-current {
+    width: 39px;
+    padding: 0;
+    justify-content: center;
+    font-size: 0;
+  }
+
+  .dashboard-report-download {
+    width: 100%;
+  }
+}

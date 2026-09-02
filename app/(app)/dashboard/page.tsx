@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import BudgetAlerts from "@/components/BudgetAlerts";
 import DashboardChart from "@/components/DashboardChart";
+import DashboardMonthNavigator from "@/components/DashboardMonthNavigator";
 import FinancialHealthCard from "@/components/FinancialHealthCard";
 import GroceryMarketCard from "@/components/GroceryMarketCard";
 import IncomeIdeasCard from "@/components/IncomeIdeasCard";
@@ -23,6 +24,7 @@ import SpendingDonut from "@/components/SpendingDonut";
 import WeatherCard from "@/components/WeatherCard";
 import { requireUser } from "@/lib/auth";
 import { getGroceryMarket } from "@/lib/grocery-market";
+import { resolveMonthPeriod } from "@/lib/month-period";
 import { euro } from "@/lib/money";
 import { buildBudgetSnapshot, buildLocalInsights, calculateFinancialHealth } from "@/lib/smart-budget";
 import { getWeather } from "@/lib/weather";
@@ -39,12 +41,19 @@ type DashboardProfile = {
   grocery_budget_weekly?: number | string | null;
 };
 
-export default async function DashboardPage() {
+type PageProps = {
+  searchParams: Promise<{ month?: string; year?: string }>;
+};
+
+export default async function DashboardPage({ searchParams }: PageProps) {
   const { supabase, user } = await requireUser();
   const now = new Date();
-  const monthStart = format(startOfMonth(now), "yyyy-MM-dd");
-  const monthEnd = format(endOfMonth(now), "yyyy-MM-dd");
-  const historyStart = format(startOfMonth(subMonths(now, 5)), "yyyy-MM-dd");
+  const params = await searchParams;
+  const period = resolveMonthPeriod(params.month, params.year, now);
+  const monthStart = period.start;
+  const monthEnd = period.end;
+  const historyStart = format(startOfMonth(subMonths(period.date, 5)), "yyyy-MM-dd");
+  const analysisDate = period.isCurrent ? now : endOfMonth(period.date);
 
   const extendedProfileResult = await supabase
     .from("profiles")
@@ -76,8 +85,8 @@ export default async function DashboardPage() {
       .from("budgets")
       .select("id,planned_amount,category_id,categories(name)")
       .eq("user_id", user.id)
-      .eq("month", now.getMonth() + 1)
-      .eq("year", now.getFullYear()),
+      .eq("month", period.month)
+      .eq("year", period.year),
     supabase
       .from("goals")
       .select("id,name,current_amount,target_amount")
@@ -96,7 +105,7 @@ export default async function DashboardPage() {
   const snapshot = buildBudgetSnapshot({
     transactions: currentTransactions,
     budgets: budgetsResult.data || [],
-    now,
+    now: analysisDate,
     alertThreshold,
     monthlySavingsTarget
   });
@@ -107,7 +116,7 @@ export default async function DashboardPage() {
 
   const chartData = [];
   for (let i = 5; i >= 0; i--) {
-    const date = subMonths(now, i);
+    const date = subMonths(period.date, i);
     const start = format(startOfMonth(date), "yyyy-MM-dd");
     const end = format(endOfMonth(date), "yyyy-MM-dd");
     const monthTransactions = allTransactions.filter(
@@ -131,19 +140,36 @@ export default async function DashboardPage() {
     <div className="dashboard-page">
       <div className="dashboard-head">
         <div className="page-head">
-          <span className="dashboard-date">{format(now, "EEEE d MMMM", { locale: fr })}</span>
+          <span className="dashboard-date">
+            {period.isCurrent
+              ? format(now, "EEEE d MMMM", { locale: fr })
+              : `Bilan historique · ${period.label}`}
+          </span>
           <h1>{firstName ? `Bonjour ${firstName}` : "Mon dashboard"}<span className="wave">👋</span></h1>
-          <p className="muted">Ton argent devient plus simple, plus clair et plus motivant.</p>
+          <p className="muted">
+            {period.isCurrent
+              ? "Ton argent devient plus simple, plus clair et plus motivant."
+              : `Voici le résumé complet de ${period.label.toLocaleLowerCase("fr")}.`}
+          </p>
         </div>
         <div className="month-progress-card">
           <div>
-            <span>Progression du mois</span>
+            <span>{period.isCurrent ? "Progression du mois" : "Mois clôturé"}</span>
             <strong>{Math.round(monthProgress)} %</strong>
           </div>
           <div className="month-progress-track"><span style={{ width: `${monthProgress}%` }} /></div>
-          <small>Jour {snapshot.dayOfMonth} sur {snapshot.daysInMonth}</small>
+          <small>{period.isCurrent ? `Jour ${snapshot.dayOfMonth} sur ${snapshot.daysInMonth}` : period.label}</small>
         </div>
       </div>
+
+      <DashboardMonthNavigator
+        monthKey={period.key}
+        periodLabel={period.label}
+        previousHref={period.previousHref}
+        nextHref={period.nextHref}
+        isCurrent={period.isCurrent}
+        reportHref={`/api/reports/monthly?month=${period.month}&year=${period.year}`}
+      />
 
       <nav className="dashboard-quick-actions" aria-label="Actions rapides">
         <Link href="/transactions">
@@ -151,7 +177,7 @@ export default async function DashboardPage() {
           <span><strong>Ajouter</strong><small>Une opération</small></span>
           <ArrowRight size={16} />
         </Link>
-        <Link href="/budgets">
+        <Link href={`/budgets?month=${period.month}&year=${period.year}`}>
           <span className="quick-action-icon quick-action-sun"><Wallet size={19} /></span>
           <span><strong>Planifier</strong><small>Un budget</small></span>
           <ArrowRight size={16} />
@@ -168,14 +194,28 @@ export default async function DashboardPage() {
           <span className="finance-hero-orb finance-hero-orb-one" aria-hidden="true" />
           <span className="finance-hero-orb finance-hero-orb-two" aria-hidden="true" />
           <div className="finance-hero-main">
-            <span className="hero-kicker"><Sparkles size={15} /> Budget disponible</span>
-            <p>Tu peux encore dépenser</p>
-            <strong>{euro(snapshot.safeToSpend)}</strong>
-            <span className="hero-explanation">après avoir protégé {euro(snapshot.monthlySavingsTarget)} d’épargne</span>
+            <span className="hero-kicker"><Sparkles size={15} /> {period.isCurrent ? "Budget disponible" : "Bilan du mois"}</span>
+            <p>{period.isCurrent ? "Tu peux encore dépenser" : "Solde après les dépenses"}</p>
+            <strong>{euro(period.isCurrent ? snapshot.safeToSpend : snapshot.remaining)}</strong>
+            <span className="hero-explanation">
+              {period.isCurrent
+                ? `après avoir protégé ${euro(snapshot.monthlySavingsTarget)} d’épargne`
+                : `${euro(snapshot.income)} de revenus et ${euro(snapshot.expenses)} de dépenses`}
+            </span>
             <div className="safe-spend-grid">
-              <div><span>Par jour</span><strong>{euro(snapshot.safeToSpendDaily)}</strong><small>{snapshot.daysRemaining} jours restants</small></div>
-              <div><span>Par semaine</span><strong>{euro(snapshot.safeToSpendWeekly)}</strong><small>rythme conseillé</small></div>
-              <div><span>Projection</span><strong>{euro(snapshot.projectedExpenses)}</strong><small>fin de mois</small></div>
+              {period.isCurrent ? (
+                <>
+                  <div><span>Par jour</span><strong>{euro(snapshot.safeToSpendDaily)}</strong><small>{snapshot.daysRemaining} jours restants</small></div>
+                  <div><span>Par semaine</span><strong>{euro(snapshot.safeToSpendWeekly)}</strong><small>rythme conseillé</small></div>
+                  <div><span>Projection</span><strong>{euro(snapshot.projectedExpenses)}</strong><small>fin de mois</small></div>
+                </>
+              ) : (
+                <>
+                  <div><span>Épargne nette</span><strong>{euro(snapshot.remaining)}</strong><small>revenus moins dépenses</small></div>
+                  <div><span>Taux d’épargne</span><strong>{Math.round(snapshot.savingRate)} %</strong><small>sur les revenus</small></div>
+                  <div><span>Dépenses</span><strong>{euro(snapshot.expenses)}</strong><small>total du mois</small></div>
+                </>
+              )}
             </div>
           </div>
           <FinancialHealthCard health={health} />
@@ -186,32 +226,36 @@ export default async function DashboardPage() {
       <BudgetAlerts budgets={snapshot.budgets} />
 
       <section className="grid grid-3 section metric-grid metric-grid-condensed">
-        <MetricCard label="Revenus" value={euro(snapshot.income)} detail="ce mois-ci" accent="emerald" icon={<ArrowUpRight size={18} />} />
+        <MetricCard label="Revenus" value={euro(snapshot.income)} detail={period.label} accent="emerald" icon={<ArrowUpRight size={18} />} />
         <MetricCard label="Dépenses" value={euro(snapshot.expenses)} detail={`${euro(snapshot.dailySpend)} / jour`} tone="negative" accent="rose" icon={<ArrowDownRight size={18} />} />
-        <MetricCard label="Solde actuel" value={euro(snapshot.remaining)} detail="avant épargne protégée" tone={snapshot.remaining >= 0 ? "positive" : "negative"} accent="blue" icon={<Wallet size={18} />} />
+        <MetricCard label={period.isCurrent ? "Solde actuel" : "Épargne nette"} value={euro(snapshot.remaining)} detail={period.isCurrent ? "avant épargne protégée" : "revenus moins dépenses"} tone={snapshot.remaining >= 0 ? "positive" : "negative"} accent="blue" icon={<Wallet size={18} />} />
       </section>
 
-      <div className="dashboard-section-heading section">
-        <div><span className="eyebrow">PERSONNALISÉ POUR TOI</span><h2>Des actions utiles cette semaine</h2></div>
-        <Link href="/settings">Ajuster mon profil <ArrowRight size={14} /></Link>
-      </div>
-      <section className="grid grid-2 personalized-grid">
-        <GroceryMarketCard
-          market={groceryMarket}
-          groceryBudgetWeekly={
-            profile?.grocery_budget_weekly === null || profile?.grocery_budget_weekly === undefined
-              ? null
-              : Number(profile.grocery_budget_weekly)
-          }
-          monthlyGrocerySpent={monthlyGrocerySpent}
-          dayOfMonth={snapshot.dayOfMonth}
-        />
-        <IncomeIdeasCard
-          birthYear={profile?.birth_year || null}
-          employmentStatus={profile?.employment_status || null}
-          skills={profile?.skills || ""}
-        />
-      </section>
+      {period.isCurrent && (
+        <>
+          <div className="dashboard-section-heading section">
+            <div><span className="eyebrow">PERSONNALISÉ POUR TOI</span><h2>Des actions utiles cette semaine</h2></div>
+            <Link href="/settings">Ajuster mon profil <ArrowRight size={14} /></Link>
+          </div>
+          <section className="grid grid-2 personalized-grid">
+            <GroceryMarketCard
+              market={groceryMarket}
+              groceryBudgetWeekly={
+                profile?.grocery_budget_weekly === null || profile?.grocery_budget_weekly === undefined
+                  ? null
+                  : Number(profile.grocery_budget_weekly)
+              }
+              monthlyGrocerySpent={monthlyGrocerySpent}
+              dayOfMonth={snapshot.dayOfMonth}
+            />
+            <IncomeIdeasCard
+              birthYear={profile?.birth_year || null}
+              employmentStatus={profile?.employment_status || null}
+              skills={profile?.skills || ""}
+            />
+          </section>
+        </>
+      )}
 
       <details className="dashboard-details section">
         <summary>
