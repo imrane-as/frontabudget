@@ -1,4 +1,8 @@
-import { detectNetSalary, detectPayslipPeriod } from "@/lib/payslip";
+import {
+  detectEmployerName,
+  detectNetSalary,
+  detectPayslipPeriod
+} from "@/lib/payslip";
 
 type QpdfFileSystem = {
   writeFile: (path: string, data: Uint8Array) => void;
@@ -44,6 +48,7 @@ export type ProcessedPayslip = {
   period: { month: number; year: number } | null;
   pageCount: number;
   wasProtected: boolean;
+  employerName: string | null;
 };
 
 async function validatePdf(file: File) {
@@ -72,7 +77,8 @@ async function analyzePdfBytes(
       salary: detectNetSalary(text),
       period: detectPayslipPeriod(text),
       pageCount: document.numPages,
-      wasProtected
+      wasProtected,
+      employerName: detectEmployerName(text)
     };
   } finally {
     await (document as unknown as { cleanup: () => Promise<unknown> }).cleanup();
