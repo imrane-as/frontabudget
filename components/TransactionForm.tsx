@@ -24,6 +24,7 @@ type Category = {
 
 type Props = {
   categories: Category[];
+  initialDate?: string;
   initialTransaction?: EditableTransaction;
   onSaved?: () => void;
 };
@@ -45,6 +46,7 @@ export type EditableTransaction = {
 
 export default function TransactionForm({
   categories,
+  initialDate,
   initialTransaction,
   onSaved
 }: Props) {
@@ -62,7 +64,7 @@ export default function TransactionForm({
     initialTransaction?.categoryId || ""
   );
   const [date, setDate] = useState(
-    initialTransaction?.date || new Date().toISOString().slice(0, 10)
+    initialTransaction?.date || initialDate || new Date().toISOString().slice(0, 10)
   );
   const [loading, setLoading] = useState(false);
   const [categorizing, setCategorizing] = useState(false);

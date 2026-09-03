@@ -4,7 +4,9 @@ import { euro } from "@/lib/money";
 import TransactionActions from "@/components/TransactionActions";
 import TransactionForm from "@/components/TransactionForm";
 import MerchantMark from "@/components/MerchantMark";
+import MonthNavigator from "@/components/MonthNavigator";
 import PageIntro from "@/components/PageIntro";
+import { resolveMonthPeriod } from "@/lib/month-period";
 import { getMerchantPresentation } from "@/lib/transaction-categorizer";
 
 export const dynamic = "force-dynamic";
@@ -36,8 +38,14 @@ type TransactionRow = {
     | null;
 };
 
-export default async function TransactionsPage() {
+type PageProps = {
+  searchParams: Promise<{ month?: string; year?: string }>;
+};
+
+export default async function TransactionsPage({ searchParams }: PageProps) {
   const { supabase, user } = await requireUser();
+  const params = await searchParams;
+  const period = resolveMonthPeriod(params.month, params.year);
 
   const [richTransactionsResult, categoriesResult] = await Promise.all([
     supabase
@@ -46,8 +54,10 @@ export default async function TransactionsPage() {
         "id,name,amount,type,transaction_date,category_id,merchant_name,merchant_domain,categorization_source,categorization_url,categories(name,icon)"
       )
       .eq("user_id", user.id)
+      .gte("transaction_date", period.start)
+      .lte("transaction_date", period.end)
       .order("transaction_date", { ascending: false })
-      .limit(100),
+      .limit(250),
     supabase
       .from("categories")
       .select("id,name,type,icon")
@@ -63,8 +73,10 @@ export default async function TransactionsPage() {
       .from("transactions")
       .select("id,name,amount,type,transaction_date,category_id,categories(name,icon)")
       .eq("user_id", user.id)
+      .gte("transaction_date", period.start)
+      .lte("transaction_date", period.end)
       .order("transaction_date", { ascending: false })
-      .limit(100);
+      .limit(250);
 
     transactions = (fallbackResult.data || []).map((row) => ({
       ...row,
@@ -92,6 +104,15 @@ export default async function TransactionsPage() {
         }
       />
 
+      <MonthNavigator
+        basePath="/transactions"
+        monthKey={period.key}
+        periodLabel={period.label}
+        previousKey={period.previousKey}
+        nextKey={period.nextKey}
+        isCurrent={period.isCurrent}
+      />
+
       {(transactionsError || categoriesResult.error) && (
         <div className="error" style={{ marginBottom: 18 }}>
           Impossible de charger toutes les transactions. Recharge la page ou
@@ -108,14 +129,18 @@ export default async function TransactionsPage() {
             </div>
             <span className="automation-pill">✦ Classement automatique</span>
           </div>
-          <TransactionForm categories={categoriesResult.data || []} />
+          <TransactionForm
+            key={period.key}
+            categories={categoriesResult.data || []}
+            initialDate={period.isCurrent ? undefined : period.end}
+          />
         </div>
 
         <div className="card transaction-history-card">
           <div className="card-title-row">
             <div>
-              <span className="eyebrow">100 DERNIÈRES</span>
-              <h3>Historique récent</h3>
+              <span className="eyebrow">OPÉRATIONS DU MOIS</span>
+              <h3>{period.label}</h3>
             </div>
           </div>
           <div className="table-wrap">
@@ -193,8 +218,8 @@ export default async function TransactionsPage() {
             {!transactions.length && !transactionsError && (
               <div className="empty-transactions">
                 <span aria-hidden="true">✦</span>
-                <strong>Ton historique est prêt</strong>
-                <p>Ajoute Netflix, Sosh ou une autre dépense pour commencer.</p>
+                <strong>Aucune opération en {period.label.toLocaleLowerCase("fr")}</strong>
+                <p>Ajoute une dépense ou un revenu pour compléter ce mois.</p>
               </div>
             )}
           </div>

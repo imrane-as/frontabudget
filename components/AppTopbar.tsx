@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Plus, Settings, ShieldCheck, UserRound } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
@@ -23,9 +23,15 @@ export default function AppTopbar({
   profileVersion
 }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const month = searchParams.get("month");
+  const year = searchParams.get("year");
+  const periodSuffix = month && year
+    ? `?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`
+    : "";
 
   useEffect(() => {
     function closeMenu(event: MouseEvent) {
@@ -54,7 +60,7 @@ export default function AppTopbar({
 
   return (
     <header className="app-topbar">
-      <Link href="/dashboard" className="topbar-mobile-brand" aria-label="FrontaBudget">
+      <Link href={`/dashboard${periodSuffix}`} className="topbar-mobile-brand" aria-label="FrontaBudget">
         <BrandLogo compact />
       </Link>
 
@@ -68,7 +74,7 @@ export default function AppTopbar({
 
       <div className="topbar-actions">
         <ThemeSwitcher />
-        <Link href="/transactions" className="btn btn-primary topbar-add">
+        <Link href={`/transactions${periodSuffix}`} className="btn btn-primary topbar-add">
           <Plus size={17} />
           <span>Nouvelle opération</span>
         </Link>
@@ -109,10 +115,10 @@ export default function AppTopbar({
               </div>
 
               <div className="profile-dropdown-section">
-                <Link href="/settings" role="menuitem" onClick={() => setOpen(false)}>
+                <Link href={`/settings${periodSuffix}`} role="menuitem" onClick={() => setOpen(false)}>
                   <UserRound size={16} /> Compléter mon profil
                 </Link>
-                <Link href="/settings" role="menuitem" onClick={() => setOpen(false)}>
+                <Link href={`/settings${periodSuffix}`} role="menuitem" onClick={() => setOpen(false)}>
                   <Settings size={16} /> Paramètres
                 </Link>
                 <ThemeSwitcher showLabel />

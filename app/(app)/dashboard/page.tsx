@@ -13,11 +13,11 @@ import {
 } from "lucide-react";
 import BudgetAlerts from "@/components/BudgetAlerts";
 import DashboardChart from "@/components/DashboardChart";
-import DashboardMonthNavigator from "@/components/DashboardMonthNavigator";
 import FinancialHealthCard from "@/components/FinancialHealthCard";
 import GroceryMarketCard from "@/components/GroceryMarketCard";
 import IncomeIdeasCard from "@/components/IncomeIdeasCard";
 import MetricCard from "@/components/MetricCard";
+import MonthNavigator from "@/components/MonthNavigator";
 import SavingsSimulator from "@/components/SavingsSimulator";
 import SmartCoach from "@/components/SmartCoach";
 import SpendingDonut from "@/components/SpendingDonut";
@@ -162,17 +162,18 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         </div>
       </div>
 
-      <DashboardMonthNavigator
+      <MonthNavigator
+        basePath="/dashboard"
         monthKey={period.key}
         periodLabel={period.label}
-        previousHref={period.previousHref}
-        nextHref={period.nextHref}
+        previousKey={period.previousKey}
+        nextKey={period.nextKey}
         isCurrent={period.isCurrent}
         reportHref={`/api/reports/monthly?month=${period.month}&year=${period.year}`}
       />
 
       <nav className="dashboard-quick-actions" aria-label="Actions rapides">
-        <Link href="/transactions">
+        <Link href={`/transactions?month=${period.month}&year=${period.year}`}>
           <span className="quick-action-icon quick-action-mint"><Plus size={19} /></span>
           <span><strong>Ajouter</strong><small>Une opération</small></span>
           <ArrowRight size={16} />
@@ -182,7 +183,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <span><strong>Planifier</strong><small>Un budget</small></span>
           <ArrowRight size={16} />
         </Link>
-        <Link href="/goals">
+        <Link href={`/goals?month=${period.month}&year=${period.year}`}>
           <span className="quick-action-icon quick-action-violet"><Target size={19} /></span>
           <span><strong>Créer</strong><small>Un objectif</small></span>
           <ArrowRight size={16} />
@@ -235,7 +236,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         <>
           <div className="dashboard-section-heading section">
             <div><span className="eyebrow">PERSONNALISÉ POUR TOI</span><h2>Des actions utiles cette semaine</h2></div>
-            <Link href="/settings">Ajuster mon profil <ArrowRight size={14} /></Link>
+            <Link href={`/settings?month=${period.month}&year=${period.year}`}>Ajuster mon profil <ArrowRight size={14} /></Link>
           </div>
           <section className="grid grid-2 personalized-grid">
             <GroceryMarketCard

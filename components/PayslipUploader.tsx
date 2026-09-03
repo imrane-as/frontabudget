@@ -24,9 +24,11 @@ type Result = { ok: boolean; message: string } | null;
 
 export default function PayslipUploader({
   userId,
+  initialPeriod,
   disabled = false
 }: {
   userId: string;
+  initialPeriod?: string;
   disabled?: boolean;
 }) {
   const router = useRouter();
@@ -36,7 +38,7 @@ export default function PayslipUploader({
   const [password, setPassword] = useState("");
   const [employer, setEmployer] = useState("");
   const [period, setPeriod] = useState(
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+    initialPeriod || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
   );
   const [salary, setSalary] = useState("");
   const [createTransaction, setCreateTransaction] = useState(true);

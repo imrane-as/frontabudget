@@ -5,19 +5,26 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 type Props = {
+  basePath: string;
   monthKey: string;
   periodLabel: string;
-  previousHref: string | null;
-  nextHref: string | null;
+  previousKey: string | null;
+  nextKey: string | null;
   isCurrent: boolean;
-  reportHref: string;
+  reportHref?: string;
 };
 
-export default function DashboardMonthNavigator({
+function periodHref(basePath: string, key: string) {
+  const [year, month] = key.split("-");
+  return `${basePath}?month=${Number(month)}&year=${year}`;
+}
+
+export default function MonthNavigator({
+  basePath,
   monthKey,
   periodLabel,
-  previousHref,
-  nextHref,
+  previousKey,
+  nextKey,
   isCurrent,
   reportHref
 }: Props) {
@@ -26,15 +33,18 @@ export default function DashboardMonthNavigator({
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   return (
-    <section className="dashboard-period-bar" aria-label="Période du tableau de bord">
+    <section
+      className={`dashboard-period-bar ${reportHref ? "has-report" : "period-only"}`}
+      aria-label="Période affichée"
+    >
       <div className="dashboard-period-copy">
         <span><CalendarRange size={18} /></span>
         <div><small>Période consultée</small><strong>{periodLabel}</strong></div>
       </div>
 
       <div className="dashboard-period-controls">
-        {previousHref ? (
-          <Link className="period-arrow" href={previousHref} aria-label="Voir le mois précédent">
+        {previousKey ? (
+          <Link className="period-arrow" href={periodHref(basePath, previousKey)} aria-label="Voir le mois précédent">
             <ChevronLeft size={18} />
           </Link>
         ) : (
@@ -50,13 +60,12 @@ export default function DashboardMonthNavigator({
             max={currentMonth}
             value={monthKey}
             onChange={(event) => {
-              const [year, month] = event.target.value.split("-");
-              if (year && month) router.push(`/dashboard?month=${Number(month)}&year=${year}`);
+              if (event.target.value) router.push(periodHref(basePath, event.target.value));
             }}
           />
         </label>
-        {nextHref ? (
-          <Link className="period-arrow" href={nextHref} aria-label="Voir le mois suivant">
+        {nextKey ? (
+          <Link className="period-arrow" href={periodHref(basePath, nextKey)} aria-label="Voir le mois suivant">
             <ChevronRight size={18} />
           </Link>
         ) : (
@@ -65,16 +74,19 @@ export default function DashboardMonthNavigator({
           </button>
         )}
         {!isCurrent && (
-          <Link className="period-current" href="/dashboard">
+          <Link className="period-current" href={basePath}>
             <RotateCcw size={14} /> Mois actuel
           </Link>
         )}
       </div>
 
-      <a className="btn btn-primary dashboard-report-download" href={reportHref}>
-        <Download size={17} />
-        <span>Télécharger le rapport PDF</span>
-      </a>
+      {reportHref && (
+        <a className="btn btn-primary dashboard-report-download" href={reportHref}>
+          <Download size={17} />
+          <span>Télécharger le rapport PDF</span>
+        </a>
+      )}
     </section>
   );
 }
+

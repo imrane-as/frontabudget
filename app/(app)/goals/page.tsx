@@ -1,17 +1,42 @@
 import { PiggyBank, Sparkles, Target } from "lucide-react";
 import GoalForm from "@/components/GoalForm";
+import MonthNavigator from "@/components/MonthNavigator";
 import PageIntro from "@/components/PageIntro";
 import { requireUser } from "@/lib/auth";
+import { resolveMonthPeriod } from "@/lib/month-period";
 import { euro } from "@/lib/money";
 
-export default async function GoalsPage() {
-  const { supabase, user } = await requireUser();
+type PageProps = {
+  searchParams: Promise<{ month?: string; year?: string }>;
+};
 
-  const { data: goals } = await supabase
-    .from("goals")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
+export default async function GoalsPage({ searchParams }: PageProps) {
+  const { supabase, user } = await requireUser();
+  const params = await searchParams;
+  const period = resolveMonthPeriod(params.month, params.year);
+
+  const [goalsResult, contributionsResult] = await Promise.all([
+    supabase
+      .from("goals")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("goal_contributions")
+      .select("goal_id,amount,contributed_at")
+      .eq("user_id", user.id)
+      .gte("contributed_at", period.start)
+      .lte("contributed_at", period.end)
+  ]);
+  const goals = goalsResult.data || [];
+  const contributions = new Map<string, number>();
+
+  for (const contribution of contributionsResult.data || []) {
+    contributions.set(
+      contribution.goal_id,
+      (contributions.get(contribution.goal_id) || 0) + Number(contribution.amount)
+    );
+  }
 
   return (
     <div className="page-shell goals-page">
@@ -21,8 +46,23 @@ export default async function GoalsPage() {
         tone="coral"
         icon={<Target size={26} />}
         description="Transforme tes envies en étapes concrètes et célèbre chaque progression."
-        aside={<span className="page-feature-pill"><Sparkles size={14} /> {goals?.length || 0} projet{goals?.length === 1 ? "" : "s"}</span>}
+        aside={<span className="page-feature-pill"><Sparkles size={14} /> {goals.length} projet{goals.length === 1 ? "" : "s"}</span>}
       />
+
+      <MonthNavigator
+        basePath="/goals"
+        monthKey={period.key}
+        periodLabel={period.label}
+        previousKey={period.previousKey}
+        nextKey={period.nextKey}
+        isCurrent={period.isCurrent}
+      />
+
+      {(goalsResult.error || contributionsResult.error) && (
+        <div className="error" style={{ marginBottom: 18 }}>
+          Impossible de charger toute la progression de cette période.
+        </div>
+      )}
 
       <section className="grid grid-2 content-section page-content-grid">
         <div className="card form-feature-card goal-form-card">
@@ -33,10 +73,11 @@ export default async function GoalsPage() {
         </div>
 
         <div className="grid goals-page-list">
-          {goals?.length ? goals.map((goal, index) => {
+          {goals.length ? goals.map((goal, index) => {
             const current = Number(goal.current_amount);
             const target = Number(goal.target_amount);
             const pct = target > 0 ? Math.min(100, (current / target) * 100) : 0;
+            const monthlyContribution = contributions.get(goal.id) || 0;
 
             return (
               <div className={`card goal-project-card goal-project-${index % 3}`} key={goal.id}>
@@ -46,6 +87,10 @@ export default async function GoalsPage() {
                 <p className="muted">sur {euro(target)}</p>
                 <div className="progress">
                   <div style={{ width: `${pct}%` }} />
+                </div>
+                <div className="goal-period-progress">
+                  <span>Ajouté en {period.label.toLocaleLowerCase("fr")}</span>
+                  <strong>{euro(monthlyContribution)}</strong>
                 </div>
               </div>
             );

@@ -4,11 +4,11 @@ import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 
-export default function WorkDayForm() {
+export default function WorkDayForm({ initialDate }: { initialDate?: string }) {
   const supabase = createClient();
   const router = useRouter();
 
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(initialDate || new Date().toISOString().slice(0, 10));
   const [type, setType] = useState("luxembourg");
 
   async function submit(event: FormEvent) {

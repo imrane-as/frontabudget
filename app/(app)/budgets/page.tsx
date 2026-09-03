@@ -1,10 +1,10 @@
-import { endOfMonth, format, startOfMonth } from "date-fns";
 import { CalendarDays, WalletCards } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { euro } from "@/lib/money";
 import BudgetForm from "@/components/BudgetForm";
-import BudgetLinesEditor from "@/components/BudgetLinesEditor";
+import MonthNavigator from "@/components/MonthNavigator";
 import PageIntro from "@/components/PageIntro";
+import { resolveMonthPeriod } from "@/lib/month-period";
 import { buildBudgetSnapshot } from "@/lib/smart-budget";
 
 export const dynamic = "force-dynamic";
@@ -18,27 +18,12 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
   const { supabase, user } = await requireUser();
   const now = new Date();
   const params = await searchParams;
-  const requestedMonth = Number(params.month);
-  const requestedYear = Number(params.year);
-  const month =
-    Number.isInteger(requestedMonth) && requestedMonth >= 1 && requestedMonth <= 12
-      ? requestedMonth
-      : now.getMonth() + 1;
-  const year =
-    Number.isInteger(requestedYear) && requestedYear >= 2020 && requestedYear <= 2100
-      ? requestedYear
-      : now.getFullYear();
-  const periodDate = new Date(year, month - 1, 1);
-  const isCurrentMonth =
-    month === now.getMonth() + 1 && year === now.getFullYear();
-  const analysisDate = isCurrentMonth
-    ? now
-    : periodDate < startOfMonth(now)
-      ? endOfMonth(periodDate)
-      : periodDate;
-
-  const start = format(startOfMonth(periodDate), "yyyy-MM-dd");
-  const end = format(endOfMonth(periodDate), "yyyy-MM-dd");
+  const period = resolveMonthPeriod(params.month, params.year, now);
+  const month = period.month;
+  const year = period.year;
+  const analysisDate = period.isCurrent ? now : new Date(year, month, 0);
+  const start = period.start;
+  const end = period.end;
   const [budgetsResult, transactionsResult, profileResult, categoriesResult] = await Promise.all([
     supabase
       .from("budgets")
@@ -72,21 +57,6 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
     alertThreshold: Number(profileResult.data?.budget_alert_threshold) || 80
   });
 
-  const editableBudgets = (budgetsResult.data || []).map((budget) => {
-    const relatedCategory = budget.categories as
-      | { name?: string | null }
-      | { name?: string | null }[]
-      | null;
-
-    return {
-      id: budget.id,
-      plannedAmount: Number(budget.planned_amount),
-      categoryName: (Array.isArray(relatedCategory)
-        ? relatedCategory[0]?.name
-        : relatedCategory?.name) || "Autre"
-    };
-  });
-
   return (
     <div className="page-shell budgets-page">
       <PageIntro
@@ -96,6 +66,15 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
         icon={<WalletCards size={26} />}
         description="Donne une mission à chaque euro et garde le contrôle sans te priver."
         aside={<span className="page-feature-pill"><CalendarDays size={14} /> {month}/{year}</span>}
+      />
+
+      <MonthNavigator
+        basePath="/budgets"
+        monthKey={period.key}
+        periodLabel={period.label}
+        previousKey={period.previousKey}
+        nextKey={period.nextKey}
+        isCurrent={period.isCurrent}
       />
 
       {(budgetsResult.error || transactionsResult.error || categoriesResult.error) && (
@@ -118,7 +97,7 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
 
         <div className="card budget-overview-card">
           <div className="card-title-row">
-            <div><span className="eyebrow">Suivi en direct</span><h3>Budgets de {month}/{year}</h3></div>
+            <div><span className="eyebrow">Suivi mensuel</span><h3>Budgets de {period.label.toLocaleLowerCase("fr")}</h3></div>
             <span className="card-heading-icon card-heading-sun"><WalletCards size={18} /></span>
           </div>
           {snapshot.budgets.length ? (
@@ -147,8 +126,6 @@ export default async function BudgetsPage({ searchParams }: PageProps) {
           ) : (
             <div className="friendly-empty"><span>🪄</span><strong>Prêt à organiser ton mois</strong><p>Crée un premier plafond pour activer les alertes de dépassement.</p></div>
           )}
-
-          <BudgetLinesEditor budgets={editableBudgets} month={month} year={year} />
         </div>
       </section>
     </div>

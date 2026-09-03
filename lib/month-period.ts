@@ -10,8 +10,8 @@ export type MonthPeriod = {
   label: string;
   key: string;
   isCurrent: boolean;
-  previousHref: string | null;
-  nextHref: string | null;
+  previousKey: string | null;
+  nextKey: string | null;
 };
 
 function capitalize(value: string) {
@@ -50,11 +50,11 @@ export function resolveMonthPeriod(
     label: capitalize(format(date, "MMMM yyyy", { locale: fr })),
     key: format(date, "yyyy-MM"),
     isCurrent,
-    previousHref: date > earliest
-      ? `/dashboard?month=${previous.getMonth() + 1}&year=${previous.getFullYear()}`
+    previousKey: date > earliest
+      ? format(previous, "yyyy-MM")
       : null,
-    nextHref: isCurrent
+    nextKey: isCurrent
       ? null
-      : `/dashboard?month=${next.getMonth() + 1}&year=${next.getFullYear()}`
+      : format(next, "yyyy-MM")
   };
 }

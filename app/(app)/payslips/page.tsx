@@ -1,8 +1,10 @@
 import { BadgeEuro, FileCheck2, FileKey2, ShieldCheck } from "lucide-react";
+import MonthNavigator from "@/components/MonthNavigator";
 import PageIntro from "@/components/PageIntro";
 import PayslipActions from "@/components/PayslipActions";
 import PayslipUploader from "@/components/PayslipUploader";
 import { requireUser } from "@/lib/auth";
+import { resolveMonthPeriod } from "@/lib/month-period";
 import { euro } from "@/lib/money";
 import { formatFileSize, formatPayslipPeriod } from "@/lib/payslip";
 
@@ -22,14 +24,22 @@ type PayslipRow = {
   created_at: string;
 };
 
-export default async function PayslipsPage() {
+type PageProps = {
+  searchParams: Promise<{ month?: string; year?: string }>;
+};
+
+export default async function PayslipsPage({ searchParams }: PageProps) {
   const { supabase, user } = await requireUser();
+  const params = await searchParams;
+  const period = resolveMonthPeriod(params.month, params.year);
   const { data, error } = await supabase
     .from("payslips")
     .select(
       "id,period_year,period_month,employer_name,net_salary,original_filename,file_size,page_count,salary_transaction_id,created_at"
     )
     .eq("user_id", user.id)
+    .eq("period_year", period.year)
+    .eq("period_month", period.month)
     .order("period_year", { ascending: false })
     .order("period_month", { ascending: false });
   const payslips = (data || []) as PayslipRow[];
@@ -46,14 +56,23 @@ export default async function PayslipsPage() {
         description="Importe ton bulletin, récupère le salaire net et range chaque mois au même endroit."
       />
 
+      <MonthNavigator
+        basePath="/payslips"
+        monthKey={period.key}
+        periodLabel={period.label}
+        previousKey={period.previousKey}
+        nextKey={period.nextKey}
+        isCurrent={period.isCurrent}
+      />
+
       <section className="payslip-summary" aria-label="Résumé des fiches de paie">
         <article className="card payslip-summary-card">
           <span><FileCheck2 /></span>
-          <div><small>Documents rangés</small><strong>{payslips.length}</strong></div>
+          <div><small>Bulletins du mois</small><strong>{payslips.length}</strong></div>
         </article>
         <article className="card payslip-summary-card">
           <span><BadgeEuro /></span>
-          <div><small>Dernier salaire net</small><strong>{latest ? euro(Number(latest.net_salary)) : "—"}</strong></div>
+          <div><small>Salaire net du mois</small><strong>{latest ? euro(Number(latest.net_salary)) : "—"}</strong></div>
         </article>
         <article className="card payslip-summary-card payslip-summary-secure">
           <span><ShieldCheck /></span>
@@ -66,7 +85,7 @@ export default async function PayslipsPage() {
           <div className="card-title-row">
             <div>
               <span className="eyebrow">NOUVEAU BULLETIN</span>
-              <h3>Importer ce mois</h3>
+              <h3>Importer pour {period.label.toLocaleLowerCase("fr")}</h3>
             </div>
             <span className="card-heading-icon"><FileKey2 /></span>
           </div>
@@ -80,14 +99,19 @@ export default async function PayslipsPage() {
             </div>
           )}
 
-          <PayslipUploader userId={user.id} disabled={Boolean(error)} />
+          <PayslipUploader
+            key={period.key}
+            userId={user.id}
+            initialPeriod={period.key}
+            disabled={Boolean(error)}
+          />
         </article>
 
         <article className="card payslip-library-card">
           <div className="card-title-row">
             <div>
-              <span className="eyebrow">ARCHIVES DÉVERROUILLÉES</span>
-              <h3>Tous mes bulletins</h3>
+              <span className="eyebrow">ARCHIVES DU MOIS</span>
+              <h3>{period.label}</h3>
             </div>
             <span className="payslip-count">{payslips.length}</span>
           </div>
@@ -120,7 +144,7 @@ export default async function PayslipsPage() {
               <div className="payslip-empty">
                 <span><FileKey2 /></span>
                 <strong>Ton coffre-fort est prêt</strong>
-                <p>Ta première fiche déverrouillée apparaîtra ici, classée par mois.</p>
+                <p>Aucune fiche n’est enregistrée pour {period.label.toLocaleLowerCase("fr")}.</p>
               </div>
             )}
           </div>

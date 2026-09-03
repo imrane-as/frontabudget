@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import {
   ArrowLeftRight,
@@ -37,11 +37,18 @@ const mobileItems = primaryItems.map((item) =>
 
 export default function AppNav() {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const month = searchParams.get("month");
+  const year = searchParams.get("year");
+  const periodSuffix = month && year
+    ? `?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`
+    : "";
+  const withPeriod = (href: string) => `${href}${periodSuffix}`;
 
   return (
     <>
       <aside className="sidebar">
-        <Link href="/dashboard" className="logo">
+        <Link href={withPeriod("/dashboard")} className="logo">
           <BrandLogo />
         </Link>
         <div className="sidebar-label">Piloter</div>
@@ -49,7 +56,7 @@ export default function AppNav() {
           {primaryItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+              <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
                 <span className="nav-icon"><Icon size={18} /></span>
                 <span>{label}</span>
               </Link>
@@ -61,7 +68,7 @@ export default function AppNav() {
           {dailyItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+              <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
                 <span className="nav-icon"><Icon size={18} /></span>
                 <span>{label}</span>
               </Link>
@@ -79,7 +86,7 @@ export default function AppNav() {
           {settingsItem.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+              <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
                 <span className="nav-icon"><Icon size={18} /></span>
                 <span>{label}</span>
               </Link>
@@ -92,7 +99,7 @@ export default function AppNav() {
         {mobileItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
-            <Link key={href} href={href} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+            <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
               <Icon size={18} />
               <span>{label}</span>
             </Link>
