@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Plus, Settings, ShieldCheck, UserRound } from "lucide-react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import ProfileAvatar from "@/components/ProfileAvatar";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = {
@@ -22,6 +23,7 @@ export default function AppTopbar({
   profileVersion
 }: Props) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const menuRef = useRef<HTMLDivElement>(null);
   const [open, setOpen] = useState(false);
@@ -31,6 +33,18 @@ export default function AppTopbar({
   const periodSuffix = month && year
     ? `?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`
     : "";
+  const pageLabels: Record<string, string> = {
+    "/dashboard": "Vue d’ensemble",
+    "/transactions": "Transactions",
+    "/payslips": "Fiches de paie",
+    "/budgets": "Budgets",
+    "/goals": "Objectifs",
+    "/commute": "Trajets",
+    "/work-calendar": "Télétravail",
+    "/settings": "Paramètres",
+    "/onboarding": "Bienvenue"
+  };
+  const currentPage = pageLabels[pathname] || "Mon espace";
 
   useEffect(() => {
     function closeMenu(event: MouseEvent) {
@@ -66,12 +80,13 @@ export default function AppTopbar({
       <div className="topbar-status">
         <span className="sync-orb" aria-hidden="true"><ShieldCheck size={16} /></span>
         <div>
-          <strong>Espace personnel</strong>
-          <span>Données privées et synchronisées</span>
+          <span>Mon espace <b>/</b> {currentPage}</span>
+          <strong>{currentPage}</strong>
         </div>
       </div>
 
       <div className="topbar-actions">
+        <ThemeSwitcher />
         <Link href={`/transactions${periodSuffix}`} className="btn btn-primary topbar-add">
           <Plus size={17} />
           <span>Nouvelle opération</span>
@@ -119,6 +134,7 @@ export default function AppTopbar({
                 <Link href={`/settings${periodSuffix}`} role="menuitem" onClick={() => setOpen(false)}>
                   <Settings size={16} /> Paramètres
                 </Link>
+                <ThemeSwitcher showLabel />
               </div>
 
               <button

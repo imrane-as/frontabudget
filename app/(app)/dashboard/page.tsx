@@ -138,39 +138,41 @@ export default async function DashboardPage({ searchParams }: PageProps) {
 
   return (
     <div className="dashboard-page">
-      <div className="dashboard-head">
-        <div className="page-head">
-          <span className="dashboard-date">
-            {period.isCurrent
-              ? format(now, "EEEE d MMMM", { locale: fr })
-              : `Bilan historique · ${period.label}`}
-          </span>
-          <h1>{firstName ? `Bonjour ${firstName}` : "Mon dashboard"}<span className="wave">👋</span></h1>
-          <p className="muted">
-            {period.isCurrent
-              ? "Ton argent devient plus simple, plus clair et plus motivant."
-              : `Voici le résumé complet de ${period.label.toLocaleLowerCase("fr")}.`}
-          </p>
-        </div>
-        <div className="month-progress-card">
-          <div>
-            <span>{period.isCurrent ? "Progression du mois" : "Mois clôturé"}</span>
-            <strong>{Math.round(monthProgress)} %</strong>
+      <section className="dashboard-command-center">
+        <div className="dashboard-head">
+          <div className="page-head">
+            <span className="dashboard-date">
+              {period.isCurrent
+                ? format(now, "EEEE d MMMM", { locale: fr })
+                : `Bilan historique · ${period.label}`}
+            </span>
+            <h1>{firstName ? `Bonjour ${firstName}` : "Mon dashboard"}<span className="wave">👋</span></h1>
+            <p className="muted">
+              {period.isCurrent
+                ? "Ton argent devient plus simple, plus clair et plus motivant."
+                : `Voici le résumé complet de ${period.label.toLocaleLowerCase("fr")}.`}
+            </p>
           </div>
-          <div className="month-progress-track"><span style={{ width: `${monthProgress}%` }} /></div>
-          <small>{period.isCurrent ? `Jour ${snapshot.dayOfMonth} sur ${snapshot.daysInMonth}` : period.label}</small>
+          <div className="month-progress-card">
+            <div>
+              <span>{period.isCurrent ? "Progression du mois" : "Mois clôturé"}</span>
+              <strong>{Math.round(monthProgress)} %</strong>
+            </div>
+            <div className="month-progress-track"><span style={{ width: `${monthProgress}%` }} /></div>
+            <small>{period.isCurrent ? `Jour ${snapshot.dayOfMonth} sur ${snapshot.daysInMonth}` : period.label}</small>
+          </div>
         </div>
-      </div>
 
-      <MonthNavigator
-        basePath="/dashboard"
-        monthKey={period.key}
-        periodLabel={period.label}
-        previousKey={period.previousKey}
-        nextKey={period.nextKey}
-        isCurrent={period.isCurrent}
-        reportHref={`/api/reports/monthly?month=${period.month}&year=${period.year}`}
-      />
+        <MonthNavigator
+          basePath="/dashboard"
+          monthKey={period.key}
+          periodLabel={period.label}
+          previousKey={period.previousKey}
+          nextKey={period.nextKey}
+          isCurrent={period.isCurrent}
+          reportHref={`/api/reports/monthly?month=${period.month}&year=${period.year}`}
+        />
+      </section>
 
       <nav className="dashboard-quick-actions" aria-label="Actions rapides">
         <Link href={`/transactions?month=${period.month}&year=${period.year}`}>

@@ -11,6 +11,7 @@ import {
   Wallet
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 
 export default function HomePage() {
   return (
@@ -20,6 +21,7 @@ export default function HomePage() {
           <BrandLogo />
         </Link>
         <div className="marketing-nav-actions">
+          <ThemeSwitcher />
           <Link className="marketing-login" href="/login">Se connecter</Link>
           <Link className="btn btn-primary" href="/signup">Créer mon espace</Link>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import {
@@ -10,6 +11,7 @@ import {
   Car,
   FileKey2,
   Goal,
+  LayoutGrid,
   Settings,
   WalletCards
 } from "lucide-react";
@@ -31,19 +33,26 @@ const settingsItem = [
   { href: "/settings", label: "Paramètres", icon: Settings }
 ];
 
-const mobileItems = primaryItems.map((item) =>
-  item.href === "/payslips" ? { ...item, label: "Paies" } : item
-);
+const mobileItems = primaryItems.filter((item) => item.href !== "/payslips");
+const mobileMoreItems = [
+  { ...primaryItems.find((item) => item.href === "/payslips")!, label: "Fiches de paie" },
+  ...dailyItems,
+  ...settingsItem
+];
 
 export default function AppNav() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const [mobileMoreOpen, setMobileMoreOpen] = useState(false);
   const month = searchParams.get("month");
   const year = searchParams.get("year");
   const periodSuffix = month && year
     ? `?month=${encodeURIComponent(month)}&year=${encodeURIComponent(year)}`
     : "";
   const withPeriod = (href: string) => `${href}${periodSuffix}`;
+  const moreActive = mobileMoreItems.some(
+    ({ href }) => pathname === href || pathname.startsWith(`${href}/`)
+  );
 
   return (
     <>
@@ -56,7 +65,7 @@ export default function AppNav() {
           {primaryItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined}>
+              <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={() => setMobileMoreOpen(false)}>
                 <span className="nav-icon"><Icon size={18} /></span>
                 <span>{label}</span>
               </Link>
@@ -95,7 +104,34 @@ export default function AppNav() {
         </nav>
       </aside>
 
-      <nav className="mobile-nav">
+      {mobileMoreOpen && (
+        <button
+          type="button"
+          className="mobile-more-backdrop"
+          aria-label="Fermer le menu"
+          onClick={() => setMobileMoreOpen(false)}
+        />
+      )}
+
+      <nav className={`mobile-more-sheet ${mobileMoreOpen ? "is-open" : ""}`} aria-label="Navigation complémentaire">
+        <div className="mobile-more-head">
+          <div><span>Navigation</span><strong>Plus d’outils</strong></div>
+          <button type="button" onClick={() => setMobileMoreOpen(false)} aria-label="Fermer">×</button>
+        </div>
+        <div className="mobile-more-grid">
+          {mobileMoreItems.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link key={href} href={withPeriod(href)} className={active ? "active" : ""} aria-current={active ? "page" : undefined} onClick={() => setMobileMoreOpen(false)}>
+                <span><Icon size={19} /></span>
+                <strong>{label}</strong>
+              </Link>
+            );
+          })}
+        </div>
+      </nav>
+
+      <nav className="mobile-nav" aria-label="Navigation principale">
         {mobileItems.map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(`${href}/`);
           return (
@@ -105,6 +141,15 @@ export default function AppNav() {
             </Link>
           );
         })}
+        <button
+          type="button"
+          className={mobileMoreOpen || moreActive ? "active" : ""}
+          aria-expanded={mobileMoreOpen}
+          onClick={() => setMobileMoreOpen((value) => !value)}
+        >
+          <LayoutGrid size={18} />
+          <span>Plus</span>
+        </button>
       </nav>
     </>
   );

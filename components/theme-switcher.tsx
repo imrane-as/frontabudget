@@ -14,18 +14,23 @@ const ThemeSwitcher = ({ showLabel = false }: { showLabel?: boolean }) => {
     setMounted(true);
   }, []);
 
-  const isDark = !mounted || resolvedTheme === "dark";
+  const isDark = mounted && resolvedTheme === "dark";
+  const nextTheme = isDark ? "light" : "dark";
 
   return (
     <button
       type="button"
       className="theme-toggle"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Activer le thème clair" : "Activer le thème sombre"}
-      title={isDark ? "Thème clair" : "Thème sombre"}
+      onClick={() => setTheme(nextTheme)}
+      aria-label={isDark ? "Passer au thème clair" : "Passer au thème sombre"}
+      title={isDark ? "Passer au thème clair" : "Passer au thème sombre"}
     >
-      {isDark ? <Sun size={17} /> : <Moon size={17} />}
-      {showLabel && <span>{isDark ? "Thème clair" : "Thème sombre"}</span>}
+      <span className="theme-toggle-track" aria-hidden="true">
+        <Sun size={14} />
+        <Moon size={14} />
+        <i className={isDark ? "is-dark" : ""} />
+      </span>
+      {showLabel && <span>{isDark ? "Apparence sombre" : "Apparence claire"}</span>}
     </button>
   );
 };

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import ThemeProvider from "@/components/ThemeProvider";
 import "./globals.css";
 import "./daylight.css";
 
@@ -16,8 +17,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="fr" className="light" style={{ colorScheme: "light" }}>
-      <body>{children}</body>
+    <html lang="fr" suppressHydrationWarning>
+      <body><ThemeProvider>{children}</ThemeProvider></body>
     </html>
   );
 }
