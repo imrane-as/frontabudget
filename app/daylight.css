@@ -1,0 +1,643 @@
+/* Daylight Ledger — FrontaBudget light-only visual system */
+html.light {
+  color-scheme: light;
+  --bg: #f5f8fc;
+  --panel: #ffffff;
+  --panel-2: #edf4fa;
+  --text: #132b45;
+  --muted: #62778d;
+  --line: #dce6ef;
+  --brand: #07966a;
+  --brand-soft: #e7f7f0;
+  --brand-dark: #075a43;
+  --sky: #3b7bf2;
+  --violet: #7768df;
+  --coral: #e86073;
+  --sun: #e9aa32;
+  --danger: #dc5368;
+  --warning: #dc951c;
+  --ring-track: #e6edf3;
+  --radius: 22px;
+}
+
+html.light body {
+  color: var(--text);
+  background:
+    radial-gradient(circle at 88% -6%, rgba(40, 188, 133, .12), transparent 27rem),
+    radial-gradient(circle at 18% 22%, rgba(78, 134, 241, .08), transparent 25rem),
+    linear-gradient(180deg, #f9fbfd 0, var(--bg) 32rem, #f3f7fb 100%);
+  font-size: 16px;
+}
+
+html.light ::selection {
+  color: #073e30;
+  background: #bcebd9;
+}
+
+html.light :focus-visible {
+  outline: 3px solid rgba(59, 123, 242, .28);
+  outline-offset: 3px;
+}
+
+/* Crisp, compact brand that stays readable everywhere. */
+.brand-logo,
+html.light .brand-logo {
+  width: max-content;
+  height: auto;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.brand-logo-mark {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 8px 14px rgba(7, 150, 106, .16));
+}
+
+.brand-mark-surface { fill: #e5f7f0; }
+.brand-mark-bars { fill: #123c67; }
+.brand-mark-arrow {
+  fill: none;
+  stroke: #08a971;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-logo-copy {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.brand-wordmark {
+  display: flex;
+  align-items: baseline;
+  color: #123c67;
+  font-size: 21px;
+  font-weight: 850;
+  letter-spacing: -.045em;
+  line-height: 1;
+}
+
+.brand-wordmark strong { font-weight: 850; }
+.brand-wordmark b { color: #07966a; font-weight: 850; }
+.brand-logo-copy small {
+  color: #71859a;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .025em;
+}
+
+.brand-logo-compact { gap: 8px; }
+.brand-logo-compact .brand-logo-mark { width: 34px; height: 34px; }
+.brand-logo-compact .brand-wordmark { font-size: 16px; }
+
+.sidebar .logo .brand-logo,
+.auth-brand .brand-logo,
+.marketing-nav-clean .brand-logo,
+.marketing-nav-clean .marketing-brand,
+.auth-brand {
+  width: max-content;
+}
+
+/* App structure */
+html.light .app-layout {
+  grid-template-columns: 256px minmax(0, 1fr);
+}
+
+html.light .sidebar {
+  padding: 24px 16px 19px;
+  border-right: 1px solid #dce7ef;
+  background:
+    radial-gradient(circle at 10% 0, rgba(28, 181, 126, .12), transparent 13rem),
+    rgba(255, 255, 255, .94);
+  box-shadow: 12px 0 40px rgba(40, 70, 97, .055);
+  backdrop-filter: blur(18px);
+}
+
+html.light .sidebar .logo {
+  min-height: 48px;
+  margin: 0 9px 28px;
+}
+
+html.light .sidebar-label {
+  margin-bottom: 9px;
+  color: #8294a6;
+  font-size: 10px;
+  letter-spacing: .14em;
+}
+
+html.light .nav { gap: 5px; }
+html.light .nav a {
+  min-height: 47px;
+  padding: 7px 9px;
+  border: 1px solid transparent;
+  border-radius: 15px;
+  color: #4c647c;
+  font-size: 14px;
+  font-weight: 720;
+}
+
+html.light .nav a:hover {
+  color: #183751;
+  border-color: #dce7ef;
+  background: rgba(240, 246, 250, .9);
+  transform: translateX(2px);
+}
+
+html.light .nav a.active {
+  color: #075f47;
+  border-color: #c9eadc;
+  background: linear-gradient(105deg, #e6f7f0, #f1f8ff);
+  box-shadow: 0 8px 22px rgba(16, 116, 83, .07);
+}
+
+html.light .nav a.active::after {
+  width: 6px;
+  height: 6px;
+  right: 12px;
+  background: #0aa371;
+  box-shadow: none;
+}
+
+html.light .nav-icon {
+  width: 32px;
+  height: 32px;
+  border-color: #dae5ee;
+  color: #52708b;
+  background: #f2f6fa;
+}
+
+html.light .nav a.active .nav-icon {
+  color: #07805b;
+  border-color: #c7eadb;
+  background: #dff5eb;
+}
+
+html.light .sidebar-foot {
+  padding: 14px;
+  border: 1px solid #d9e6f2;
+  color: #234661;
+  background: linear-gradient(135deg, #edf8ff, #ecf9f4 65%, #fff8e8);
+  box-shadow: 0 10px 25px rgba(43, 80, 110, .055);
+}
+
+html.light .sidebar-foot-icon {
+  color: #765f1e;
+  border-color: #f3dfae;
+  background: #fff6d9;
+}
+
+html.light .sidebar-foot small { color: #6d8194; }
+
+html.light .app-topbar {
+  min-height: 72px;
+  padding: 12px 36px;
+  border-bottom: 1px solid rgba(214, 226, 236, .9);
+  background: rgba(249, 252, 254, .84);
+  box-shadow: 0 8px 28px rgba(44, 71, 96, .035);
+  backdrop-filter: blur(20px) saturate(140%);
+}
+
+html.light .sync-orb {
+  color: #087e5a;
+  border-color: #ccebdd;
+  background: #e9f8f2;
+  box-shadow: none;
+}
+
+html.light .topbar-status strong { color: #26445e; font-size: 13px; }
+html.light .topbar-status div span { color: #71869a; font-size: 10px; }
+
+html.light .profile-menu-trigger {
+  min-height: 47px;
+  border-color: #d8e4ed;
+  color: #24435d;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 7px 20px rgba(44, 71, 96, .06);
+}
+
+html.light .profile-menu-trigger:hover,
+html.light .profile-menu-trigger[aria-expanded="true"] {
+  border-color: #bfe2d4;
+  background: #f1faf6;
+}
+
+html.light .profile-avatar {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .85);
+  background: linear-gradient(145deg, #3679df, #08a36f);
+  box-shadow: 0 5px 14px rgba(33, 102, 123, .18);
+}
+
+html.light .profile-trigger-copy strong { color: #203e58; font-size: 12px; }
+html.light .profile-trigger-copy small { color: #71869a; font-size: 10px; }
+
+html.light .profile-dropdown {
+  border-color: #d7e3ec;
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 26px 70px rgba(32, 59, 82, .16);
+}
+
+html.light .profile-dropdown-head { border-bottom-color: #e4ebf1; }
+html.light .profile-dropdown-head strong { color: #193851; }
+html.light .profile-dropdown-head span { color: #6b8195; }
+html.light .profile-dropdown-section > a { color: #36536d; }
+html.light .profile-dropdown-section > a:hover { color: #173750; background: #eef6f3; }
+html.light .profile-logout { color: #bd3f55; border-top-color: #e4ebf1; }
+html.light .profile-logout:hover:not(:disabled) { background: #fff0f2; }
+
+html.light .app-main {
+  width: min(1480px, 100%);
+  padding: 35px 38px 64px;
+}
+
+/* Type, controls and common surfaces */
+html.light h1,
+html.light h2,
+html.light h3,
+html.light strong { color: var(--text); }
+
+html.light .muted { color: var(--muted); }
+html.light .eyebrow,
+html.light .dashboard-date { color: #087c5a; }
+
+html.light .btn {
+  min-height: 44px;
+  border: 1px solid #d4e1ea;
+  color: #284861;
+  background: #fff;
+  box-shadow: 0 6px 16px rgba(39, 67, 92, .055);
+}
+
+html.light .btn:hover:not(:disabled) {
+  border-color: #b9cbd9;
+  background: #f8fbfd;
+  box-shadow: 0 11px 24px rgba(39, 67, 92, .09);
+}
+
+html.light .btn-primary {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #08aa75, #087e5b);
+  box-shadow: 0 10px 24px rgba(7, 139, 96, .2);
+}
+
+html.light .btn-primary:hover:not(:disabled) {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #079b6b, #066f50);
+  box-shadow: 0 13px 28px rgba(7, 125, 87, .25);
+}
+
+html.light .btn-danger {
+  color: #b73c51;
+  border-color: #f1cbd1;
+  background: #fff4f5;
+}
+
+html.light label { color: #38556e; font-size: 14px; font-weight: 680; }
+html.light input,
+html.light select,
+html.light textarea {
+  min-height: 47px;
+  border: 1px solid #cfdee8;
+  color: #17354e;
+  background: #fff;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, .9), inset 0 1px 2px rgba(39, 70, 96, .025);
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder { color: #8a9bac; }
+html.light input:hover,
+html.light select:hover,
+html.light textarea:hover { border-color: #abc0d0; }
+html.light input:focus,
+html.light select:focus,
+html.light textarea:focus {
+  border-color: #27a77c;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(31, 169, 121, .11);
+}
+
+html.light .card,
+html.light .grocery-market-card,
+html.light .income-ideas-card,
+html.light .transaction-dialog,
+html.light .payslip-import-card {
+  border: 1px solid #dce7ef;
+  color: var(--text);
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 16px 38px rgba(35, 65, 91, .065);
+}
+
+html.light .card:hover {
+  border-color: #cad9e4;
+  box-shadow: 0 20px 46px rgba(35, 65, 91, .09);
+}
+
+html.light .card h3 { color: #183750; font-size: 18px; }
+html.light .card-heading-icon {
+  color: #087e5a;
+  border-color: #ccebdd;
+  background: #e9f8f2;
+}
+
+html.light .card-heading-sun { color: #a36c09; border-color: #f2dcab; background: #fff6dc; }
+html.light .metric-label,
+html.light .kpi-sublabel { color: #6b8094; }
+html.light .metric-value { color: #17364f; }
+html.light .metric-positive,
+html.light .amount-income { color: #07835d; }
+html.light .metric-negative,
+html.light .amount-expense { color: #ca435a; }
+
+html.light .metric-card::after { opacity: .09; }
+html.light .metric-card.accent-emerald .metric-icon { color: #07835d; border-color: #c8eadc; background: #e6f7f0; }
+html.light .metric-card.accent-rose .metric-icon { color: #c64a5d; border-color: #f2d3d8; background: #fff0f2; }
+html.light .metric-card.accent-blue .metric-icon { color: #306dc7; border-color: #d1e0f6; background: #eef5ff; }
+html.light .metric-card.accent-violet .metric-icon { color: #6c5bc8; border-color: #dfdafa; background: #f3f0ff; }
+
+html.light .page-intro {
+  min-height: 168px;
+  border-color: rgba(var(--intro), .22);
+  background:
+    radial-gradient(circle at 88% 8%, rgba(var(--intro), .13), transparent 35%),
+    linear-gradient(130deg, #fff, #f8fbfd);
+  box-shadow: 0 17px 42px rgba(34, 66, 93, .065);
+}
+
+html.light .page-intro h1 { color: #153550; }
+html.light .page-intro p { color: #61778c; font-size: 14px; }
+html.light .page-intro-icon { box-shadow: none; }
+html.light .page-feature-pill {
+  color: #34536d;
+  border-color: rgba(var(--intro), .25);
+  background: rgba(255, 255, 255, .72);
+}
+
+html.light .form-feature-card,
+html.light .account-card,
+html.light .subscription-card,
+html.light .transaction-entry-card,
+html.light .weather-card,
+html.light .simulator-card {
+  background:
+    radial-gradient(circle at 100% 0, rgba(52, 128, 224, .07), transparent 34%),
+    #fff;
+}
+
+/* Month selection and quick actions */
+html.light .dashboard-period-bar {
+  border-color: #d7e5ee;
+  background: linear-gradient(105deg, #eef9f4, #f5f9fd 58%, #eef5ff);
+  box-shadow: 0 10px 27px rgba(36, 71, 98, .045);
+}
+
+html.light .dashboard-period-copy > span { color: #087d5a; background: #dcf3e9; }
+html.light .dashboard-period-copy small { color: #6e8396; font-size: 10px; }
+html.light .dashboard-period-copy strong { color: #1c3c56; font-size: 14px; }
+html.light .period-arrow {
+  color: #35536d;
+  border-color: #d1dfe9;
+  background: #fff;
+}
+html.light .period-arrow:hover:not(:disabled) { color: #087d5a; border-color: #b8ddce; background: #ecf8f3; }
+html.light .period-current { color: #2a639c; border-color: #cfdef0; background: #edf5ff; }
+
+html.light .month-progress-card,
+html.light .dashboard-quick-actions > a {
+  border-color: #d9e5ee;
+  color: #25445e;
+  background: rgba(255, 255, 255, .92);
+  box-shadow: 0 10px 26px rgba(36, 67, 92, .05);
+}
+html.light .month-progress-card > div:first-child,
+html.light .month-progress-card small,
+html.light .dashboard-quick-actions small { color: #71869a; }
+html.light .month-progress-track { background: #e5edf3; }
+html.light .dashboard-quick-actions > a:hover { border-color: #c6d8e4; background: #fff; }
+html.light .dashboard-quick-actions > a > svg { color: #7b90a3; }
+html.light .quick-action-mint { color: #07835d; background: #e4f7ef; }
+html.light .quick-action-sun { color: #aa710c; background: #fff4d6; }
+html.light .quick-action-violet { color: #6b5bc6; background: #f1eeff; }
+
+/* Dashboard */
+html.light .finance-hero {
+  border: 1px solid #cfe5e5;
+  background:
+    radial-gradient(circle at 6% 0, rgba(24, 179, 124, .17), transparent 38%),
+    radial-gradient(circle at 100% 100%, rgba(62, 122, 239, .12), transparent 42%),
+    linear-gradient(130deg, #ffffff 0%, #f2fbf7 47%, #f1f7ff 100%);
+  box-shadow: 0 24px 58px rgba(32, 74, 95, .1);
+}
+
+html.light .finance-hero-main > p { color: #567085; }
+html.light .finance-hero-main > strong {
+  color: #123a55;
+  background: none;
+  -webkit-text-fill-color: currentColor;
+  text-shadow: none;
+}
+html.light .hero-kicker { color: #087d5a; }
+html.light .hero-explanation { color: #6c8194; }
+html.light .safe-spend-grid > div {
+  color: #193b55;
+  border-color: rgba(119, 158, 177, .22);
+  background: rgba(255, 255, 255, .72);
+  backdrop-filter: blur(8px);
+}
+html.light .safe-spend-grid > div:hover { background: #fff; }
+html.light .safe-spend-grid span,
+html.light .safe-spend-grid small { color: #698095; }
+html.light .health-card-inner {
+  color: #173750;
+  border-color: rgba(115, 153, 176, .22);
+  background: rgba(255, 255, 255, .76);
+}
+html.light .score-ring > div { background: #fff; }
+html.light .health-label { color: #6555b9; }
+html.light .health-copy p { color: #5f778c; }
+html.light .health-signals .positive { color: #096c4e; background: #e4f6ee; }
+html.light .health-signals .attention { color: #8a610e; background: #fff4d8; }
+
+html.light .weather-icon { filter: drop-shadow(0 6px 12px rgba(67, 102, 133, .13)); }
+html.light .weather-days > div,
+html.light .goal-line,
+html.light .budget-line,
+html.light .preference-card,
+html.light .threshold-panel,
+html.light .grocery-price,
+html.light .income-idea,
+html.light .profile-photo-panel,
+html.light .landing-preview-row > div,
+html.light .landing-weather-strip,
+html.light .landing-benefit-grid article {
+  color: var(--text);
+  border-color: #dce7ef;
+  background: #f7fafc;
+}
+html.light .weather-days > div:hover { background: #eef6fc; }
+html.light .eco-tip { color: #176349; border-color: #cfeadb; background: #eaf8f2; }
+html.light .grocery-price > strong,
+html.light .market-source-row a,
+html.light .income-profile-link,
+html.light .weather-settings-link { color: #087c5a; }
+html.light .grocery-product-icon { color: #096c4e; background: linear-gradient(135deg, #dcf4e9, #eaf3ff); }
+html.light .income-idea > span { color: #346db4; background: #eaf3ff; }
+
+html.light .dashboard-details {
+  border-color: #d9e5ed;
+  background: rgba(255, 255, 255, .75);
+  box-shadow: 0 12px 30px rgba(38, 68, 93, .045);
+}
+html.light .dashboard-details > summary:hover { background: #f8fbfd; }
+html.light .details-action { color: #087d5a; }
+
+html.light .simulation-result { border-color: #ded9f5; background: #f4f1ff; }
+html.light .simulation-result strong { color: #5849b2; }
+html.light .simulator-note { color: #667c91; }
+html.light .donut-legend > div > span:nth-child(2) { color: #36536d; }
+html.light .empty-visual > span { color: #a9bccb; }
+html.light .progress { background: #e3ebf1; box-shadow: inset 0 1px 2px rgba(39, 66, 90, .1); }
+html.light .progress > div { background: linear-gradient(90deg, #08a873, #48c99c); box-shadow: none; }
+
+/* Tables, dialogs and messages */
+html.light th { color: #61788e; font-size: 10px; }
+html.light td { color: #294861; border-bottom-color: #e2eaf0; }
+html.light tbody tr:hover { background: #f1f8f5; }
+html.light .transaction-date,
+html.light .transaction-privacy { color: #70869a; }
+html.light .merchant-mark { border-color: #d9e4ec; box-shadow: 0 6px 16px rgba(31, 63, 89, .09); }
+html.light .category-suggestion { border-color: #cde8dc; background: linear-gradient(110deg, #edf9f4, #f3f7ff); }
+html.light .category-suggestion strong,
+html.light .merchant-cell strong { color: #193850; }
+html.light .suggestion-source { color: #536a80; border-color: #d8e4ec; background: #f3f7fa; }
+html.light .suggestion-source-link { color: #2f6fbd; }
+html.light .source-local { color: #08724f; border-color: #c9e8da; background: #e9f7f1; }
+html.light .source-ai { color: #6655b8; border-color: #ddd7f5; background: #f2efff; }
+
+html.light .transaction-icon-button,
+html.light .transaction-dialog-close,
+html.light .payslip-icon-button {
+  color: #4e687f;
+  border-color: #d5e1ea;
+  background: #f7fafc;
+}
+html.light .transaction-icon-button:hover { color: #087c5a; border-color: #bde2d3; background: #edf8f3; }
+html.light .transaction-icon-button-danger:hover { color: #ba3d52; border-color: #efc7ce; background: #fff0f2; }
+html.light .transaction-dialog-backdrop { background: rgba(30, 52, 70, .32); }
+html.light .transaction-dialog-icon { color: #6655bd; border-color: #ded8f5; background: #f2efff; }
+html.light .transaction-delete-header .transaction-dialog-icon { color: #ba3d52; border-color: #f0cbd1; background: #fff0f2; }
+html.light .transaction-delete-summary { border-color: #dce6ee; background: #f7fafc; }
+html.light .transaction-delete-summary span { color: #284760; }
+html.light .transaction-delete-summary strong { color: #bd4056; }
+
+html.light .status-ok { color: #075e43; border-color: #c4e5d6; background: #e7f7ef; }
+html.light .status-warning { color: #77530c; border-color: #edd79f; background: #fff6dc; }
+html.light .status-danger,
+html.light .error { color: #992e42; border-color: #edc2ca; background: #fff0f2; }
+html.light .success { color: #075f43; border-color: #bfe2d2; background: #e5f6ee; }
+
+/* Payslips */
+html.light .payslip-summary-card > span,
+html.light .payslip-file-mark { color: #326daf; border-color: #d2e1f2; background: #edf5ff; }
+html.light .payslip-summary-secure > span { color: #087c59; border-color: #cae9db; background: #e8f7f0; }
+html.light .payslip-flow span { color: #627a90; border-color: #d9e4ec; background: #f4f7fa; }
+html.light .payslip-flow span.active { color: #2d66a5; border-color: #c9daf0; background: #ebf4ff; }
+html.light .payslip-flow span.done { color: #08724f; border-color: #c6e5d6; background: #e6f6ee; }
+html.light .payslip-dropzone { color: #294b67; border-color: #bcd5ed; background: #f0f7ff; }
+html.light .payslip-dropzone:hover { border-color: #79aad5; background: #e9f4ff; }
+html.light .payslip-dropzone.has-file { border-color: #a8d8c4; background: #edf9f4; }
+html.light .payslip-item { border-color: #dce6ee; background: #f8fafc; }
+html.light .payslip-item:hover { border-color: #bfd2e0; background: #f0f7fb; }
+html.light .payslip-item-copy strong { color: #1c3b54; }
+html.light .payslip-item-salary strong { color: #087c59; }
+
+/* Public pages */
+html.light .landing-v3,
+html.light .auth-wrap {
+  background:
+    radial-gradient(circle at 82% 12%, rgba(28, 182, 127, .13), transparent 28rem),
+    radial-gradient(circle at 18% 30%, rgba(62, 122, 239, .09), transparent 25rem),
+    linear-gradient(180deg, #fbfdff, #f4f8fb);
+}
+
+html.light .marketing-nav-clean { border-bottom-color: #e1eaf1; }
+html.light .marketing-login { color: #405e77; }
+html.light .marketing-login:hover { color: #087c59; }
+html.light .landing-copy .badge { color: #08724f; border-color: #c8e9da; background: rgba(232, 248, 241, .9); }
+html.light .landing-copy h1 { color: #14334d; }
+html.light .landing-copy h1 > span {
+  color: transparent;
+  background: linear-gradient(92deg, #078a61, #3979d7 62%, #6c5ac4);
+  background-clip: text;
+}
+html.light .landing-copy .lead { color: #5a7187; }
+html.light .landing-trust span { color: #647b8f; }
+html.light .landing-dashboard-preview {
+  color: var(--text);
+  border-color: #d6e3ec;
+  background: rgba(255, 255, 255, .94);
+  box-shadow: 0 32px 78px rgba(34, 67, 91, .13);
+}
+html.light .landing-preview-balance {
+  border-color: #c9e6dc;
+  background: linear-gradient(135deg, #e9f8f2, #eff6ff);
+}
+html.light .landing-preview-balance > span { color: #087957; }
+html.light .landing-benefit-grid article { background: rgba(255, 255, 255, .75); }
+html.light .landing-benefit-grid article > span { color: #087d5a; background: #e4f6ee; }
+html.light .landing-benefit-grid p { color: #60768b; font-size: 13px; }
+
+html.light .auth-card {
+  border-color: #d9e5ed;
+  background:
+    radial-gradient(circle at 100% 0, rgba(67, 124, 224, .08), transparent 34%),
+    #fff;
+  box-shadow: 0 28px 75px rgba(33, 64, 89, .13);
+}
+html.light .auth-card h1 { color: #17364f; }
+html.light .auth-note { color: #647b8f; }
+html.light .auth-note a { color: #087c59; }
+
+/* Responsive: preserve the airy desktop system on smaller screens. */
+@media (max-width: 1100px) and (min-width: 761px) {
+  html.light .app-layout { grid-template-columns: 228px minmax(0, 1fr); }
+  html.light .brand-wordmark { font-size: 19px; }
+  html.light .brand-logo-mark { width: 40px; height: 40px; }
+  html.light .sidebar { padding-inline: 12px; }
+}
+
+@media (max-width: 760px) {
+  html.light .app-layout { display: block; }
+  html.light .app-topbar { min-height: 66px; padding: 10px 15px; }
+  html.light .app-main { padding: 22px 15px 106px; }
+  html.light .mobile-nav {
+    border-color: #d6e3ec;
+    background: rgba(255, 255, 255, .94);
+    box-shadow: 0 18px 48px rgba(31, 60, 84, .17);
+    backdrop-filter: blur(20px) saturate(140%);
+  }
+  html.light .mobile-nav a { color: #61788e; }
+  html.light .mobile-nav a.active { color: #076b4c; background: linear-gradient(145deg, #e3f6ed, #edf5ff); }
+  html.light .profile-trigger-copy { display: none; }
+  html.light .profile-menu-trigger { padding-right: 6px; }
+  html.light .page-intro { padding: 22px; }
+}
+
+@media (max-width: 520px) {
+  html.light .topbar-mobile-brand .brand-logo-copy { display: none; }
+  html.light .topbar-mobile-brand .brand-logo-mark { width: 38px; height: 38px; }
+  html.light .landing-hero-clean { padding-top: 48px; }
+  html.light .landing-copy h1 { font-size: clamp(40px, 12vw, 53px); }
+}

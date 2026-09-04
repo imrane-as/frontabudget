@@ -6,7 +6,6 @@ import { ChevronDown, LogOut, Plus, Settings, ShieldCheck, UserRound } from "luc
 import { useRouter, useSearchParams } from "next/navigation";
 import BrandLogo from "@/components/BrandLogo";
 import ProfileAvatar from "@/components/ProfileAvatar";
-import { ThemeSwitcher } from "@/components/theme-switcher";
 import { createClient } from "@/lib/supabase/client";
 
 type Props = {
@@ -73,7 +72,6 @@ export default function AppTopbar({
       </div>
 
       <div className="topbar-actions">
-        <ThemeSwitcher />
         <Link href={`/transactions${periodSuffix}`} className="btn btn-primary topbar-add">
           <Plus size={17} />
           <span>Nouvelle opération</span>
@@ -121,7 +119,6 @@ export default function AppTopbar({
                 <Link href={`/settings${periodSuffix}`} role="menuitem" onClick={() => setOpen(false)}>
                   <Settings size={16} /> Paramètres
                 </Link>
-                <ThemeSwitcher showLabel />
               </div>
 
               <button

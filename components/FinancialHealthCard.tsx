@@ -6,7 +6,7 @@ export default function FinancialHealthCard({ health }: { health: FinancialHealt
 
   return (
     <div className="health-card-inner">
-      <div className="score-ring" style={{ background: `conic-gradient(${color} ${health.score * 3.6}deg, rgba(255,255,255,.08) 0deg)` }}>
+      <div className="score-ring" style={{ background: `conic-gradient(${color} ${health.score * 3.6}deg, var(--ring-track) 0deg)` }}>
         <div>
           <strong>{health.score}</strong>
           <span>/ 100</span>

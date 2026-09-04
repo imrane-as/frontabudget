@@ -23,7 +23,7 @@ export default function SpendingDonut({ data }: { data: Array<{ name: string; am
             <Pie data={chartData} dataKey="amount" nameKey="name" innerRadius={68} outerRadius={96} paddingAngle={4} stroke="none">
               {chartData.map((item, index) => <Cell key={item.name} fill={colors[index % colors.length]} />)}
             </Pie>
-            <Tooltip formatter={(value) => euro(Number(value))} contentStyle={{ background: "#0d1a2b", border: "1px solid #20344e", borderRadius: 12 }} />
+            <Tooltip formatter={(value) => euro(Number(value))} contentStyle={{ color: "var(--text)", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 12, boxShadow: "0 14px 35px rgba(31, 55, 77, .12)" }} />
           </PieChart>
         </ResponsiveContainer>
         <div className="donut-center"><span>Total</span><strong>{euro(total)}</strong></div>
